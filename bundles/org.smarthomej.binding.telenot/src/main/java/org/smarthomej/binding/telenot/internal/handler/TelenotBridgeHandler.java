@@ -20,11 +20,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -37,6 +42,7 @@ import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.thing.binding.ThingHandlerService;
 import org.openhab.core.types.Command;
+import org.openhab.core.util.HexUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smarthomej.binding.telenot.internal.TelenotDiscoveryService;
@@ -85,10 +91,10 @@ public abstract class TelenotBridgeHandler extends BaseBridgeHandler {
     protected volatile ArrayList<String> usedSecurityAreaContact = new ArrayList<String>();
     protected volatile ArrayList<String> usedReportingArea = new ArrayList<String>();
 
-    protected volatile String lastMsgReverseBinaryArrayMP[] = { "0" };
-    protected volatile String lastMsgReverseBinaryArraySB[] = { "0", "0", "0", "0", "0", "0", "0", "0" };
-    protected volatile String lastMsgReverseBinaryArrayMB[] = { "0" };
-    protected volatile String lastMsgReverseBinaryArrayMBD[] = { "0" };
+    protected volatile BitSet lastMsgReverseBinaryArrayMP = new BitSet(8);
+    protected volatile BitSet lastMsgReverseBinaryArraySB = new BitSet(64);
+    protected volatile BitSet lastMsgReverseBinaryArrayMB = new BitSet(8);
+    protected volatile BitSet lastMsgReverseBinaryArrayMBD = new BitSet(8);
 
     protected @Nullable ScheduledFuture<?> connectionCheckJob;
     protected @Nullable ScheduledFuture<?> refreshSendDataJob;
@@ -309,44 +315,13 @@ public abstract class TelenotBridgeHandler extends BaseBridgeHandler {
      */
     private void parseMpMessage(TelenotMsgType mt, String msg) throws MessageParseException {
         // mt is unused at the moment
-        MPMessage mpMsg;
-        InputMessage inpMsg;
-        StringBuilder sb = new StringBuilder();
-
         // msg = msg.substring(24, msg.length());
         logger.trace("MP msg: {}", msg);
-        msg = msg.substring(24, msg.length() < 84 ? msg.length() : 84);
+        msg = msg.substring(24, Math.min(msg.length(), 84));
 
-        String msgReverseBinaryArray[] = hexStringToReverseBinaryArray(msg);
-        int addr = 0;
-        for (int i = 0; i < msgReverseBinaryArray.length; i++) {
-            String d = msgReverseBinaryArray[i];
-            for (int a = 1; a <= 8; a++) {
-                String value = d.substring(a - 1, a);
-                sb.append(addr);
-                sb.append(",");
-                sb.append(d.substring(a - 1, a));
-
-                try {
-                    mpMsg = new MPMessage(sb.toString());
-                    inpMsg = new InputMessage(sb.toString());
-                } catch (IllegalArgumentException e) {
-                    throw new MessageParseException(e.getMessage());
-                }
-                if (lastMsgReverseBinaryArrayMP.length != msgReverseBinaryArray.length) {
-                    notifyChildHandlers(mpMsg);
-                    notifyChildHandlers(inpMsg);
-                } else {
-                    String lastValue = lastMsgReverseBinaryArrayMP[i].substring(a - 1, a);
-                    if (!lastValue.equals(value) || refresh) {
-                        notifyChildHandlers(mpMsg);
-                        notifyChildHandlers(inpMsg);
-                    }
-                }
-                sb.setLength(0);
-                addr++;
-            }
-        }
+        BitSet msgReverseBinaryArray = hexStringToReversedByteOrderBitSet(msg);
+        processMessageBitSet(msgReverseBinaryArray, lastMsgReverseBinaryArrayMP, 0,
+                List.of(MPMessage::new, InputMessage::new));
         lastMsgReverseBinaryArrayMP = msgReverseBinaryArray;
     }
 
@@ -360,99 +335,41 @@ public abstract class TelenotBridgeHandler extends BaseBridgeHandler {
      */
     private void parseSbMessage(TelenotMsgType mt, String msg) throws MessageParseException {
         // mt is unused at the moment
-        SBMessage sbMsg;
-        StringBuilder strBuilder = new StringBuilder();
-
         logger.trace("SB msg: {}", msg);
 
         if (msg.length() < 33) {
             throw new MessageParseException("wrong SB msg length");
         }
-        String msgSb = msg.substring(36, msg.length() < 52 ? msg.length() : 52);
+        String msgSb = msg.substring(36, Math.min(msg.length(), 52));
 
-        String msgReverseBinaryArraySb[] = hexStringToReverseBinaryArray(msgSb);
+        BitSet msgReverseBinaryArraySb = hexStringToReversedByteOrderBitSet(msgSb);
         int addr = 1;
-        for (int i = 0; i < msgReverseBinaryArraySb.length; i++) {
-            String d = msgReverseBinaryArraySb[i];
-            String value = lastMsgReverseBinaryArraySB[i];
-            if (!value.equals(d) || refresh) {
-                strBuilder.append(addr);
-                for (int a = 1; a <= 8; a++) {
-                    strBuilder.append(",");
-                    strBuilder.append(d.substring(a - 1, a));
+        try {
+            for (int i = 0; i < msgReverseBinaryArraySb.size() / 8; i++) {
+                // iterate over bytes instead of bits
+                int startBit = i * 8;
+                int endBit = i * 8 + 7;
+                BitSet value = msgReverseBinaryArraySb.get(startBit, endBit);
+                BitSet oldValue = lastMsgReverseBinaryArraySB.get(startBit, endBit);
+                if (refresh || !oldValue.equals(value)) {
+                    String msgStr = addr + "," + IntStream.range(0, 7).mapToObj(j -> booleanToString(value.get(j)))
+                            .collect(Collectors.joining(","));
+                    notifyChildHandlers(new SBMessage(msgStr));
                 }
-                try {
-                    sbMsg = new SBMessage(strBuilder.toString());
-                } catch (IllegalArgumentException e) {
-                    throw new MessageParseException(e.getMessage());
-                }
-                notifyChildHandlers(sbMsg);
-                strBuilder.setLength(0);
+                addr++;
             }
-            addr++;
+        } catch (IllegalArgumentException e) {
+            throw new MessageParseException(e.getMessage());
         }
+
         lastMsgReverseBinaryArraySB = msgReverseBinaryArraySb;
 
-        MBMessage mbMsg;
-        String msgMb = msg.substring(52, 84);
-
-        String msgReverseBinaryArrayMb[] = hexStringToReverseBinaryArray(msgMb);
-        int addrMb = 1;
-        for (int i = 0; i < msgReverseBinaryArrayMb.length; i++) {
-            String d = msgReverseBinaryArrayMb[i];
-            for (int a = 1; a <= 8; a++) {
-                String value = d.substring(a - 1, a);
-                strBuilder.append(addrMb);
-                strBuilder.append(",");
-                strBuilder.append(value);
-                try {
-                    mbMsg = new MBMessage(strBuilder.toString());
-                } catch (IllegalArgumentException e) {
-                    throw new MessageParseException(e.getMessage());
-                }
-                if (lastMsgReverseBinaryArrayMB.length != msgReverseBinaryArrayMb.length) {
-                    notifyChildHandlers(mbMsg);
-                } else {
-                    String lastValue = lastMsgReverseBinaryArrayMB[i].substring(a - 1, a);
-                    if (!lastValue.equals(value) || refresh) {
-                        notifyChildHandlers(mbMsg);
-                    }
-                }
-                strBuilder.setLength(0);
-                addrMb++;
-            }
-        }
+        BitSet msgReverseBinaryArrayMb = hexStringToReversedByteOrderBitSet(msg.substring(52, 84));
+        processMessageBitSet(msgReverseBinaryArrayMb, lastMsgReverseBinaryArrayMB, 1, List.of(MBMessage::new));
         lastMsgReverseBinaryArrayMB = msgReverseBinaryArrayMb;
 
-        MBDMessage mbdMsg;
-        String msgMbd = msg.substring(84, 116);
-
-        String msgReverseBinaryArrayMbd[] = hexStringToReverseBinaryArray(msgMbd);
-        int addrMbd = 1;
-        for (int i = 0; i < msgReverseBinaryArrayMbd.length; i++) {
-            String d = msgReverseBinaryArrayMbd[i];
-            for (int a = 1; a <= 8; a++) {
-                String value = d.substring(a - 1, a);
-                strBuilder.append(addrMbd);
-                strBuilder.append(",");
-                strBuilder.append(value);
-                try {
-                    mbdMsg = new MBDMessage(strBuilder.toString());
-                } catch (IllegalArgumentException e) {
-                    throw new MessageParseException(e.getMessage());
-                }
-                if (lastMsgReverseBinaryArrayMBD.length != msgReverseBinaryArrayMbd.length) {
-                    notifyChildHandlers(mbdMsg);
-                } else {
-                    String lastValue = lastMsgReverseBinaryArrayMBD[i].substring(a - 1, a);
-                    if (!lastValue.equals(value) || refresh) {
-                        notifyChildHandlers(mbdMsg);
-                    }
-                }
-                strBuilder.setLength(0);
-                addrMbd++;
-            }
-        }
+        BitSet msgReverseBinaryArrayMbd = hexStringToReversedByteOrderBitSet(msg.substring(84, 116));
+        processMessageBitSet(msgReverseBinaryArrayMbd, lastMsgReverseBinaryArrayMBD, 1, List.of(MBDMessage::new));
         lastMsgReverseBinaryArrayMBD = msgReverseBinaryArrayMbd;
     }
 
@@ -493,19 +410,14 @@ public abstract class TelenotBridgeHandler extends BaseBridgeHandler {
         String msgInputContacts = msg.substring(24, 16 + (Integer.parseInt(msg.substring(12, 14), 16) * 2));
         logger.trace("UsedContact: {}", msgInputContacts);
 
-        String msgReverseBinaryArray[] = hexStringToReverseBinaryArray(msgInputContacts);
+        BitSet msgReverseBinaryArray = hexStringToReversedByteOrderBitSet(msgInputContacts);
         int address = 0;
-        String hexAddr = "";
-        for (int i = 0; i < msgReverseBinaryArray.length; i++) {
-            String d = msgReverseBinaryArray[i];
-            for (int a = 1; a <= 8; a++) {
-                if (Integer.parseInt(d.substring(a - 1, a)) == 0) {
-                    hexAddr = Integer.toHexString(address);
-                    hexAddr = String.format("%s" + "%0" + (4 - hexAddr.length()) + "d%s", "0x", 0, hexAddr);
-                    usedInputContact.add(hexAddr);
-                }
-                address++;
+        for (int i = 0; i < msgReverseBinaryArray.size(); i++) {
+            if (!msgReverseBinaryArray.get(i)) {
+                String hexAddr = String.format("0x%04x", address);
+                usedInputContact.add(hexAddr);
             }
+            address++;
         }
     }
 
@@ -523,41 +435,32 @@ public abstract class TelenotBridgeHandler extends BaseBridgeHandler {
         String msgOutputContacts = msg.substring(24, 16 + (Integer.parseInt(msg.substring(12, 14), 16) * 2));
         logger.trace("UsedContact: {}", msgOutputContacts);
 
-        String msgReverseBinaryArray[] = hexStringToReverseBinaryArray(msgOutputContacts);
+        BitSet msgReverseBinaryArray = hexStringToReversedByteOrderBitSet(msgOutputContacts);
         int address = 1280;
-        String hexAddr = "";
-        for (int i = 0; i < msgReverseBinaryArray.length; i++) {
-            String d = msgReverseBinaryArray[i];
-            for (int a = 1; a <= 8; a++) {
-                if (Integer.parseInt(d.substring(a - 1, a)) == 0) {
-                    hexAddr = Integer.toHexString(address);
-                    hexAddr = String.format("%s" + "%0" + (4 - hexAddr.length()) + "d%s", "0x", 0, hexAddr);
-                    if (address >= 1280 && address <= 1327) {
-                        usedOutputContact.add(hexAddr);
-                    } else if (address >= 1328 && address <= 1391) {
-                        double b = address - 1327;
-                        double sbNumber = Math.ceil(b / 8);
-                        int number = (int) sbNumber;
-                        String sbNum = String.format("%s", number);
-                        ArrayList<String> num = new ArrayList<String>();
-                        num.add(sbNum);
-                        if (!usedSecurityArea.equals(num)) {
-                            usedSecurityArea.add(sbNum);
-                        }
-                        usedSecurityAreaContact.add(hexAddr);
-                    } else if (address >= 1392 && address <= 1519) {
-                        usedReportingArea.add(hexAddr);
+        for (int i = 0; i < msgReverseBinaryArray.size(); i++) {
+            if (msgReverseBinaryArray.get(i)) {
+                String hexAddr = String.format("0x%04x", address);
+                if (address >= 1280 && address <= 1327) {
+                    usedOutputContact.add(hexAddr);
+                } else if (address >= 1328 && address <= 1391) {
+                    int number = (int) Math.ceil((address - 1327) / 8);
+                    String sbNum = String.valueOf(number);
+                    // TODO: is that really what you want? Check equality? Or do you want to check if the element is
+                    // inside the list?
+                    // if (!usedSecurityArea.contains(sbNum))
+                    if (!usedSecurityArea.equals(List.of(sbNum))) {
+                        usedSecurityArea.add(sbNum);
                     }
+                    usedSecurityAreaContact.add(hexAddr);
+                } else if (address >= 1392 && address <= 1519) {
+                    usedReportingArea.add(hexAddr);
                 }
-                address++;
             }
+            address++;
         }
         TelenotDiscoveryService ds = discoveryService;
         if (discovery && ds != null) {
-            for (String i : usedSecurityArea) {
-                int sbNum = Integer.parseInt(i);
-                ds.processSB(sbNum);
-            }
+            usedSecurityArea.forEach(i -> ds.processSB(Integer.parseInt(i)));
         }
     }
 
@@ -617,6 +520,44 @@ public abstract class TelenotBridgeHandler extends BaseBridgeHandler {
             throw new MessageParseException(e.getMessage());
         }
         notifyChildHandlers(emaMessage);
+    }
+
+    /**
+     * process and notify all child handlers
+     *
+     * @param newValues a BitSet containing the new values
+     * @param oldValues a BitSet containing the old values
+     * @param startAddress the start address for the messages
+     * @param messageCreators a List of methods that create the message
+     * @throws MessageParseException if message creation fails
+     */
+    private void processMessageBitSet(BitSet newValues, BitSet oldValues, int startAddress,
+            List<Function<String, TelenotMessage>> messageCreators) throws MessageParseException {
+        // if the size of the old and new BitSet is different, we need to send the value
+        boolean needsRefresh = refresh || (newValues.size() != oldValues.size());
+
+        try {
+            for (int i = 0; i < newValues.size(); i++) {
+                int address = startAddress + i;
+                boolean value = newValues.get(i);
+                if (needsRefresh || (value != lastMsgReverseBinaryArrayMB.get(i))) {
+                    String message = address + "," + booleanToString(value);
+                    messageCreators.forEach(m -> notifyChildHandlers(m.apply(message)));
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            throw new MessageParseException(e.getMessage());
+        }
+    }
+
+    /**
+     * convert a boolean to a 0/1 String
+     * 
+     * @param b the input value
+     * @return "0" if false, "1" if true
+     */
+    private String booleanToString(boolean b) {
+        return b ? "1" : "0";
     }
 
     /**
@@ -703,37 +644,16 @@ public abstract class TelenotBridgeHandler extends BaseBridgeHandler {
     }
 
     /**
-     * Converts a hex string into a reversed binary array
+     * Converts a hex string into a reversed
      */
-    public static String[] hexStringToReverseBinaryArray(String s) {
-        StringBuilder sb = new StringBuilder();
-        int len = s.length();
-        int dlen;
-        String[] data = new String[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = hexToBinary(s.substring(i, i + 2));
-            dlen = data[i / 2].length();
-            if (dlen <= 7) {
-                for (int a = dlen; a < 8; a++) {
-                    sb.append('0');
-                }
-                sb.append(data[i / 2]);
-            } else {
-                sb.append(data[i / 2]);
-            }
-            data[i / 2] = sb.reverse().toString();
-            sb.setLength(0);
+    private BitSet hexStringToReversedByteOrderBitSet(String s) {
+        byte[] bytes = HexUtils.hexToBytes(s);
+        int byteCount = bytes.length;
+        byte[] reversedBytes = new byte[byteCount];
+        for (int i = 0; i < byteCount; i++) {
+            reversedBytes[i] = bytes[byteCount - i - 1];
         }
-        return data;
-    }
-
-    /**
-     * Converts hex into binary
-     */
-    public static String hexToBinary(String hex) {
-        int i = Integer.parseInt(hex, 16);
-        String bin = Integer.toBinaryString(i);
-        return bin;
+        return BitSet.valueOf(reversedBytes);
     }
 
     /**
