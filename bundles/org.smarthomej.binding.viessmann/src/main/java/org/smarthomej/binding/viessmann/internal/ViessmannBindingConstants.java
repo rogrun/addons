@@ -12,6 +12,8 @@
  */
 package org.smarthomej.binding.viessmann.internal;
 
+import java.util.Set;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.thing.ThingTypeUID;
 
@@ -30,6 +32,8 @@ public class ViessmannBindingConstants {
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
     public static final ThingTypeUID THING_TYPE_DEVICE = new ThingTypeUID(BINDING_ID, "device");
+
+    public static final Set<ThingTypeUID> DISCOVERABLE_DEVICE_TYPE_UIDS = Set.of(THING_TYPE_DEVICE);
 
     // References for needed API identifiers
     public static final String VIESSMANN_HOST = "api.viessmann.com";

@@ -12,7 +12,10 @@
  */
 package org.smarthomej.binding.viessmann.internal.handler;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -26,10 +29,12 @@ import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
+import org.openhab.core.thing.binding.ThingHandlerService;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smarthomej.binding.viessmann.internal.ViessmannConfiguration;
+import org.smarthomej.binding.viessmann.internal.ViessmannDiscoveryService;
 import org.smarthomej.binding.viessmann.internal.api.ViessmannApi;
 import org.smarthomej.binding.viessmann.internal.dto.device.DeviceDTO;
 import org.smarthomej.binding.viessmann.internal.dto.device.DeviceData;
@@ -46,10 +51,8 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     private static final int DEFAULT_API_TIMEOUT_SECONDS = 20;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    // private final JsonParser jsonParser = new JsonParser();
 
     private final HttpClient httpClient;
-    // private final OAuthFactory oAuthFactory;
 
     private @NonNullByDefault({}) ViessmannApi api;
     private @NonNullByDefault({}) String apiKey;
@@ -60,8 +63,8 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     private @NonNullByDefault({}) String gatewaySerial;
     private @NonNullByDefault({}) int pollingInterval;
 
-    // private int refreshInterval;
-    // private long tokenExpiryDate;
+    protected @Nullable ViessmannDiscoveryService discoveryService;
+
     private int apiTimeout;
 
     private @Nullable static String newInstallationId;
@@ -70,6 +73,8 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     private @Nullable ScheduledFuture<?> viessmannBridgePollingJob;
 
     public @Nullable List<DeviceData> devicesData;
+    protected volatile List<String> devicesList = new ArrayList<>();
+    protected volatile List<String> pollingDevicesList = new ArrayList<>();
 
     public static void setInstallationGatewayId(String newInstallation, String newGateway) {
         newInstallationId = newInstallation;
@@ -78,6 +83,29 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
 
     private @Nullable List<DeviceData> getDevicesData() {
         return devicesData;
+    }
+
+    /**
+     * get the devices list (needed for discovery)
+     *
+     * @return a list of the all devices
+     */
+    public List<String> getDevicesList() {
+        // return a copy of the list, so we don't run into concurrency problems
+        return new ArrayList<>(devicesList);
+    }
+
+    public void setPollingDevice(String deviceId) {
+        if (!pollingDevicesList.contains(deviceId)) {
+            pollingDevicesList.add(deviceId);
+        }
+    }
+
+    public void unsetPollingDevice(String deviceId) {
+        if (pollingDevicesList.contains(deviceId)) {
+            // Remove device from list
+            pollingDevicesList.remove(deviceId);
+        }
     }
 
     private void setConfigInstallationGatewayId() {
@@ -103,6 +131,11 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     }
 
     @Override
+    public Collection<Class<? extends ThingHandlerService>> getServices() {
+        return Set.of(ViessmannDiscoveryService.class);
+    }
+
+    @Override
     public void initialize() {
         logger.debug("Initialize Viessmann Accountservice");
 
@@ -122,15 +155,12 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         if (config.installationId == null || config.gatewaySerial == null) {
             setConfigInstallationGatewayId();
         }
-
         getAllDevices();
-
         startViessmannBridgePolling(pollingInterval);
-
-        getAllFeatures();
     }
 
     public void getAllDevices() {
+        logger.trace("Loading Device List from Viessmann Bridge");
         DeviceDTO allDevices = api.getAllDevices();
         if (allDevices != null) {
             devicesData = allDevices.data;
@@ -140,6 +170,9 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
                 for (DeviceData deviceData : allDevices.data) {
                     String deviceId = deviceData.id;
                     String deviceType = deviceData.deviceType;
+                    if (!devicesList.contains(deviceId)) {
+                        devicesList.add(deviceId);
+                    }
                     logger.trace("Device ID: {}, Type: {}", deviceId, deviceType);
                 }
             }
@@ -153,13 +186,11 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         return false;
     }
 
-    public void getAllFeatures() {
-        List<DeviceData> devices = getDevicesData();
+    private void pollingFeatures() {
+        List<String> devices = pollingDevicesList;
         if (devices != null) {
-            for (DeviceData deviceData : devices) {
-                String deviceId = deviceData.id;
-                String deviceType = deviceData.deviceType;
-                logger.debug("Loading Featueres from Device ID: {}, Type: {}", deviceId, deviceType);
+            for (String deviceId : devices) {
+                logger.debug("Loading Featueres from Device ID: {}", deviceId);
                 getAllFeaturesByDeviceId(deviceId);
             }
         }
@@ -182,6 +213,8 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
                 logger.debug("Refresh job scheduled to run every {} seconds for '{}'", pollingIntervalS,
                         getThing().getUID());
                 api.checkExpiringToken();
+                // getAllFeatures();
+                pollingFeatures();
             }, 1, TimeUnit.SECONDS.toSeconds(pollingIntervalS), TimeUnit.SECONDS);
         }
     }
@@ -195,7 +228,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     }
 
     /**
-     * Notify appropriate child thing handlers of an Telenot message by calling their handleUpdate() methods.
+     * Notify appropriate child thing handlers of an Viessmann message by calling their handleUpdate() methods.
      *
      * @param msg message to forward to child handler(s)
      */
@@ -222,35 +255,4 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     public void updateBridgeStatus(ThingStatus status, ThingStatusDetail statusDetail, String statusMessage) {
         updateStatus(status, statusDetail, statusMessage);
     }
-
-    /**
-     * Getters and Setters
-     */
-    //@formatter:off
-     /*
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    private void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
-
-    public int getRefreshInterval() {
-        return refreshInterval;
-    }
-
-    private void setRefreshInterval(int refreshInterval) {
-        this.refreshInterval = refreshInterval;
-    }
-
-    public long getTokenExpiryDate() {
-        return tokenExpiryDate;
-    }
-
-    private void setTokenExpiryDate(long expiresIn) {
-        this.tokenExpiryDate = System.nanoTime() + expiresIn;
-    }
-    */
-    //@formatter:on
 }

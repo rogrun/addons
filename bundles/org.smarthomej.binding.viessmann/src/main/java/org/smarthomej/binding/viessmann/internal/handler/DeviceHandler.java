@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.QuantityType;
@@ -57,6 +58,7 @@ public class DeviceHandler extends ViessmannThingHandler {
 
     private ThingsConfig config = new ThingsConfig();
     private String devId = "";
+    private @Nullable Bridge br;
 
     public DeviceHandler(Thing thing) {
         super(thing);
@@ -72,8 +74,16 @@ public class DeviceHandler extends ViessmannThingHandler {
         }
         updateProperty(PROPERTY_ID, String.valueOf(config.deviceId)); // set representation property used by discovery
         devId = String.valueOf(config.deviceId);
+
+        setPollingDevice();
+
         initDeviceState();
         logger.trace("Device handler finished initializing");
+    }
+
+    @Override
+    public void dispose() {
+        unsetPollingDevice();
     }
 
     @Override
@@ -82,6 +92,23 @@ public class DeviceHandler extends ViessmannThingHandler {
         ViessmannBridgeHandler bridgeHandler = bridge == null ? null : (ViessmannBridgeHandler) bridge.getHandler();
         if (bridgeHandler != null) {
             bridgeHandler.getAllFeaturesByDeviceId(devId);
+        }
+    }
+
+    private void setPollingDevice() {
+        Bridge bridge = getBridge();
+        br = bridge;
+        ViessmannBridgeHandler bridgeHandler = bridge == null ? null : (ViessmannBridgeHandler) bridge.getHandler();
+        if (bridgeHandler != null) {
+            bridgeHandler.setPollingDevice(devId);
+        }
+    }
+
+    private void unsetPollingDevice() {
+        Bridge bridge = br;
+        ViessmannBridgeHandler bridgeHandler = bridge == null ? null : (ViessmannBridgeHandler) bridge.getHandler();
+        if (bridgeHandler != null) {
+            bridgeHandler.unsetPollingDevice(devId);
         }
     }
 
