@@ -66,7 +66,7 @@ public abstract class ViessmannThingHandler extends BaseThingHandler {
     public abstract void initChannelState();
 
     /**
-     * Notify handler of a message from the Telenot via the bridge
+     * Notify handler of a message from the Viessmann via the bridge
      *
      * @param msg The ViessmannMessage to handle
      */
@@ -74,7 +74,7 @@ public abstract class ViessmannThingHandler extends BaseThingHandler {
     public abstract void handleUpdate(FeatureDataDTO feature);
 
     /**
-     * Notify handler of a channel message from the Telenot via the bridge
+     * Notify handler of a channel message from the Viessmann via the bridge
      *
      * @param msg The ViessmannMessage to handle
      */
@@ -90,31 +90,6 @@ public abstract class ViessmannThingHandler extends BaseThingHandler {
             initDeviceState();
         } else if (bridgeStatus == ThingStatus.OFFLINE) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
-        }
-    }
-
-    /**
-     * Send a command via the bridge
-     *
-     * @param command command to send
-     */
-    // public void sendCommand(ViessmannCommand command) {
-    public void sendCommand(String command) {
-        boolean wait = true;
-        while (!readyToSendData.get()) {
-            if (wait) {
-                logger.debug("waiting for ready to send data");
-                wait = false;
-            }
-        }
-        Bridge bridge = getBridge();
-        ViessmannBridgeHandler bridgeHandler = bridge == null ? null : (ViessmannBridgeHandler) bridge.getHandler();
-
-        if (bridgeHandler == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_MISSING_ERROR, "No bridge associated");
-        } else {
-            // TODO .....
-            // bridgeHandler.sendTelenotCommand(command);
         }
     }
 }

@@ -238,8 +238,11 @@ public class ViessmannApi implements AccessTokenRefreshListener {
         String response = "";
         response = executeGet(VIESSMANN_BASE_URL + "iot/v1/equipment/installations/" + installationId + "/gateways/"
                 + gatewaySerial + "/devices/" + deviceId + "/features/");
-        FeaturesDTO features = GSON.fromJson(response, FeaturesDTO.class);
-        return features;
+        if (response != null) {
+            FeaturesDTO features = GSON.fromJson(response, FeaturesDTO.class);
+            return features;
+        }
+        return null;
     }
 
     private void setInstallationAndGatewayId() {
@@ -274,11 +277,12 @@ public class ViessmannApi implements AccessTokenRefreshListener {
             if (response.indexOf("viErrorId") >= 0) {
                 ViErrorDTO viError = GSON.fromJson(response, ViErrorDTO.class);
                 if (viError != null) {
-                    logger.error("ViError: {}", viError.getMessage());
+                    logger.warn("ViError: {}", viError.getMessage());
+                    return null;
                 }
             }
         } catch (IOException e) {
-            logger.info("API: Unable to execute POST: {}", e.getMessage());
+            logger.info("API: Unable to execute GET: {}", e.getMessage());
         } catch (ViessmannAuthException e) {
             logger.info("API: Unable to execute GET: {}", e.getMessage());
             isAuthorized();
@@ -296,7 +300,7 @@ public class ViessmannApi implements AccessTokenRefreshListener {
             if (response.indexOf("viErrorId") >= 0) {
                 ViErrorDTO viError = GSON.fromJson(response, ViErrorDTO.class);
                 if (viError != null) {
-                    logger.error("ViError: {} | Reason: {}", viError.getMessage(),
+                    logger.warn("ViError: {} | Reason: {}", viError.getMessage(),
                             viError.getExtendedPayload().getReason());
                 }
                 return false;

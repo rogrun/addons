@@ -124,7 +124,6 @@ public class DeviceHandler extends ViessmannThingHandler {
                     String uri = null;
                     String param = null;
                     String com[] = commands.split(",");
-                    logger.info("Command: {}", commands);
                     if (OnOffType.ON.equals(command)) {
                         uri = prop.get("activateUri");
                         param = "{}";
@@ -170,7 +169,7 @@ public class DeviceHandler extends ViessmannThingHandler {
                 }
             }
         } catch (IllegalArgumentException e) {
-            logger.info("handleCommand fails", e);
+            logger.warn("handleCommand fails", e);
         }
     }
 
@@ -468,7 +467,7 @@ public class DeviceHandler extends ViessmannThingHandler {
                             prop.put("unscheduleParams", "{}");
                             break;
                         case "setTargetTemperature":
-                            channelType = msg.getChannelType();
+                            channelType = "type-setTargetTemperature";
                             prop.put("setTargetTemperatureUri", commands.setTargetTemperature.uri);
                             prop.put("command", "setTargetTemperature");
                             prop.put("setTargetTemperatureParams", "temperature");
