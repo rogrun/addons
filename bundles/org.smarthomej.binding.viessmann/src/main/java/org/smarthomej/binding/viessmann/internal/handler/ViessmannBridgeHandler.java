@@ -41,6 +41,8 @@ import org.smarthomej.binding.viessmann.internal.dto.device.DeviceData;
 import org.smarthomej.binding.viessmann.internal.dto.features.FeatureDataDTO;
 import org.smarthomej.binding.viessmann.internal.dto.features.FeaturesDTO;
 
+import com.google.gson.JsonSyntaxException;
+
 /**
  * The {@link ViessmannBridgeHandler} is responsible for handling the api connection.
  *
@@ -197,12 +199,16 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     }
 
     public void getAllFeaturesByDeviceId(String deviceId) {
-        FeaturesDTO allFeatures = api.getAllFeatures(deviceId);
-        if (allFeatures != null) {
-            List<FeatureDataDTO> featuresData = allFeatures.data;
-            for (FeatureDataDTO featureDataDTO : featuresData) {
-                notifyChildHandlers(featureDataDTO);
+        try {
+            FeaturesDTO allFeatures = api.getAllFeatures(deviceId);
+            if (allFeatures != null) {
+                List<FeatureDataDTO> featuresData = allFeatures.data;
+                for (FeatureDataDTO featureDataDTO : featuresData) {
+                    notifyChildHandlers(featureDataDTO);
+                }
             }
+        } catch (JsonSyntaxException | IllegalStateException e) {
+            logger.warn("Parsing Viessmann response fails: {}", e);
         }
     }
 
