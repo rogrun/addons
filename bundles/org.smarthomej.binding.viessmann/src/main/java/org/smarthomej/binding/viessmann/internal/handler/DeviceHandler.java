@@ -429,7 +429,9 @@ public class DeviceHandler extends ViessmannThingHandler {
                             prop.put("setModeParams", "mode");
                             break;
                         case "setTemperature":
-                            channelType = "type-settemperature";
+                            if (!channelType.equals("type-boolean")) {
+                                channelType = "type-settemperature";
+                            }
                             prop.put("setTemperatureUri", commands.setTemperature.uri);
                             prop.put("command", "setTemperature");
                             prop.put("setTemperatureParams", "targetTemperature");
@@ -479,7 +481,9 @@ public class DeviceHandler extends ViessmannThingHandler {
             }
         }
         ChannelTypeUID channelTypeUID = new ChannelTypeUID(BINDING_ID, channelType);
-
+        if (msg.getFeatureName().indexOf("active") != -1) {
+            logger.trace("Feature: {} ChannelType: {}", msg.getFeatureClear(), channelType);
+        }
         Channel channel = callback.createChannelBuilder(channelUID, channelTypeUID).withLabel(msg.getFeatureName())
                 .withDescription(msg.getFeatureDescription()).withProperties(prop).build();
         updateThing(editThing().withoutChannel(channelUID).withChannel(channel).build());
