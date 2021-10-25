@@ -58,7 +58,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
 
     private @NonNullByDefault({}) ViessmannApi api;
     private @NonNullByDefault({}) String apiKey;
-    private @NonNullByDefault({}) String authToken;
+    // private @NonNullByDefault({}) String authToken;
     private @NonNullByDefault({}) String user;
     private @NonNullByDefault({}) String password;
     private @NonNullByDefault({}) String installationId;
@@ -83,9 +83,9 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         newGatewaySerial = newGateway;
     }
 
-    private @Nullable List<DeviceData> getDevicesData() {
-        return devicesData;
-    }
+    // private @Nullable List<DeviceData> getDevicesData() {
+    // return devicesData;
+    // }
 
     /**
      * get the devices list (needed for discovery)
@@ -216,12 +216,11 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         ScheduledFuture<?> currentPollingJob = viessmannBridgePollingJob;
         if (currentPollingJob == null) {
             viessmannBridgePollingJob = scheduler.scheduleWithFixedDelay(() -> {
-                logger.debug("Refresh job scheduled to run every {} seconds for '{}'", pollingIntervalS,
-                        getThing().getUID());
+                logger.debug("Refresh job scheduled to run every {} seconds for '{}'",
+                        pollingIntervalS * devicesList.size(), getThing().getUID());
                 api.checkExpiringToken();
-                // getAllFeatures();
                 pollingFeatures();
-            }, 1, TimeUnit.SECONDS.toSeconds(pollingIntervalS), TimeUnit.SECONDS);
+            }, 1, TimeUnit.SECONDS.toSeconds(pollingIntervalS * devicesList.size()), TimeUnit.SECONDS);
         }
     }
 

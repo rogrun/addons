@@ -66,7 +66,7 @@ public class ExtendedPayload {
         if (other == this) {
             return true;
         }
-        if ((other instanceof ExtendedPayload) == false) {
+        if (!(other instanceof ExtendedPayload)) {
             return false;
         }
         ExtendedPayload rhs = ((ExtendedPayload) other);

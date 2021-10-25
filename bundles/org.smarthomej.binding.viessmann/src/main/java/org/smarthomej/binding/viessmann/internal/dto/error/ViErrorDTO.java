@@ -130,7 +130,7 @@ public class ViErrorDTO {
         if (other == this) {
             return true;
         }
-        if ((other instanceof ViErrorDTO) == false) {
+        if (!(other instanceof ViErrorDTO)) {
             return false;
         }
         ViErrorDTO rhs = ((ViErrorDTO) other);

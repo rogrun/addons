@@ -16,7 +16,7 @@
 					Application on the Viessmann Developer Website."</description>
 			</parameter>
 			<parameter name="user" type="text" required="true">
-				<label>User Name (e-Mail address)</label>
+				<label>User(E-Mail address)</label>
 				<description>The user name for which the application key has been issued</description>
 			</parameter>
 			<parameter name="password" type="text" required="true">
@@ -36,7 +36,7 @@
 				<description>Time in seconds to allow API request to complete</description>
 				<default>22</default>
 			</parameter>
-			<parameter name="pollingInterval" type="integer" required="false" unit="s">
+			<parameter name="pollingInterval" type="integer" min="90" required="false" unit="s">
 				<label>Polling Interval</label>
 				<default>120</default>
 				<description>How often the available heating should be queried in seconds</description>

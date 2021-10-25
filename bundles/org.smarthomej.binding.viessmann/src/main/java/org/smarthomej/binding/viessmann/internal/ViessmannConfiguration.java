@@ -12,21 +12,25 @@
  */
 package org.smarthomej.binding.viessmann.internal;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * The {@link ViessmannConfiguration} class contains fields mapping thing configuration parameters.
  *
  * @author Ronny Grun - Initial contribution
  */
+@NonNullByDefault
 public class ViessmannConfiguration {
 
     /**
      * Sample configuration parameters. Replace with your own.
      */
-    public String user;
-    public String password;
-    public String apiKey;
-    public String installationId;
-    public String gatewaySerial;
-    public int pollingInterval;
-    public int apiTimeout;
+    public @Nullable String user;
+    public @Nullable String password;
+    public @Nullable String apiKey;
+    public @Nullable String installationId;
+    public @Nullable String gatewaySerial;
+    public int pollingInterval = 20;
+    public int apiTimeout = 120;
 }

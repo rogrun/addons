@@ -26,5 +26,5 @@ public class FeatureConstraintsEnum {
 
     @SerializedName("enum")
     @Expose
-    public List<String> _enum = null;
+    public List<String> enum1 = null;
 }

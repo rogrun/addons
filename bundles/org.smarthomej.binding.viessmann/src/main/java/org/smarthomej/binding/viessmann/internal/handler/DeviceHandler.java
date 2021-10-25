@@ -210,7 +210,7 @@ public class DeviceHandler extends ViessmannThingHandler {
             }
             FeatureProperties prop = featureDataDTO.properties;
             ArrayList<String> entr = prop.getUsedEntries();
-            if (entr.size() != 0) {
+            if (!entr.isEmpty()) {
                 for (String entry : entr) {
                     String valueEntry = "";
                     String typeEntry = "";
@@ -232,10 +232,10 @@ public class DeviceHandler extends ViessmannThingHandler {
                             msg.setFeature(featureDataDTO.feature + "#status");
                             typeEntry = prop.status.type;
                             valueEntry = prop.status.value;
-                            if (valueEntry.equals("off")) {
+                            if ("off".equals(valueEntry)) {
                                 typeEntry = "boolean";
                                 bool = false;
-                            } else if (valueEntry.equals("on")) {
+                            } else if ("on".equals(valueEntry)) {
                                 typeEntry = "boolean";
                                 bool = true;
                             }
@@ -244,7 +244,7 @@ public class DeviceHandler extends ViessmannThingHandler {
                             msg.setFeatureName(featureName + " active");
                             msg.setFeature(featureDataDTO.feature + "#active");
                             typeEntry = prop.active.type;
-                            valueEntry = prop.active.value == true ? "true" : "false";
+                            valueEntry = prop.active.value ? "true" : "false";
                             bool = prop.active.value;
                             break;
                         case "name":
@@ -274,7 +274,7 @@ public class DeviceHandler extends ViessmannThingHandler {
                             msg.setFeatureName(featureName);
                             msg.setFeature(featureDataDTO.feature + "#overlapAllowed");
                             typeEntry = prop.overlapAllowed.type;
-                            valueEntry = prop.overlapAllowed.value == true ? "true" : "false";
+                            valueEntry = prop.overlapAllowed.value ? "true" : "false";
                             bool = prop.overlapAllowed.value;
                             break;
                         case "temperature":
@@ -358,20 +358,20 @@ public class DeviceHandler extends ViessmannThingHandler {
                     if (msg.getDeviceId().indexOf(config.deviceId) != -1 && active) {
                         logger.trace("Feature: {} Type:{} Entry: {}={}", featureDataDTO.feature, typeEntry, entry,
                                 valueEntry);
-                        if (thing.getChannel(msg.getChannelId()) == null && !entry.equals("unit")) {
+                        if (thing.getChannel(msg.getChannelId()) == null && !"unit".equals(entry)) {
                             createChannel(msg);
                         }
-                        if (typeEntry.equals("temperature")) {
+                        if ("temperature".equals(typeEntry)) {
                             DecimalType state = DecimalType.valueOf(msg.getValue());
                             updateState(msg.getChannelId(), state);
-                        } else if (typeEntry.equals("number")) {
+                        } else if ("number".equals(typeEntry)) {
                             DecimalType state = DecimalType.valueOf(msg.getValue());
                             updateState(msg.getChannelId(), state);
-                        } else if (typeEntry.equals("boolean")) {
+                        } else if ("boolean".equals(typeEntry)) {
                             OnOffType state = bool ? OnOffType.ON : OnOffType.OFF;
                             updateState(msg.getChannelId(), state);
-                        } else if (typeEntry.equals("string") || typeEntry.equals("Schedule")
-                                || typeEntry.equals("array")) {
+                        } else if ("string".equals(typeEntry) || "Schedule".equals(typeEntry)
+                                || "array".equals(typeEntry)) {
                             StringType state = StringType.valueOf(msg.getValue());
                             updateState(msg.getChannelId(), state);
                         }
@@ -401,7 +401,7 @@ public class DeviceHandler extends ViessmannThingHandler {
         FeatureCommands commands = msg.getCommands();
         if (commands != null) {
             ArrayList<String> com = commands.getUsedCommands();
-            if (com.size() != 0) {
+            if (!com.isEmpty()) {
                 for (String command : com) {
                     switch (command) {
                         case "setName":
@@ -429,7 +429,7 @@ public class DeviceHandler extends ViessmannThingHandler {
                             prop.put("setModeParams", "mode");
                             break;
                         case "setTemperature":
-                            if (!channelType.equals("type-boolean")) {
+                            if (!"type-boolean".equals(channelType)) {
                                 channelType = "type-settemperature";
                             }
                             prop.put("setTemperatureUri", commands.setTemperature.uri);

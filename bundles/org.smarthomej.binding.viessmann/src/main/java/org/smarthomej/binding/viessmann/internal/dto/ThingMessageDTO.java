@@ -19,6 +19,11 @@ import org.smarthomej.binding.viessmann.internal.dto.features.FeatureCommands;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Superclass for all Thing message types.
+ * 
+ * @author Ronny Grun - Initial contribution
+ */
 public class ThingMessageDTO {
 
     @SerializedName("type")
@@ -207,7 +212,7 @@ public class ThingMessageDTO {
         if (other == this) {
             return true;
         }
-        if ((other instanceof ThingMessageDTO) == false) {
+        if (!(other instanceof ThingMessageDTO)) {
             return false;
         }
         ThingMessageDTO rhs = ((ThingMessageDTO) other);

@@ -23,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
-import org.openhab.core.auth.client.oauth2.AccessTokenRefreshListener;
-import org.openhab.core.auth.client.oauth2.AccessTokenResponse;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +45,8 @@ import com.google.gson.GsonBuilder;
  * @author Ronny Grun - Initial contribution
  */
 @NonNullByDefault
-public class ViessmannApi implements AccessTokenRefreshListener {
+public class ViessmannApi {
+    // public class ViessmannApi implements AccessTokenRefreshListener {
 
     private static final Gson GSON = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 
@@ -98,8 +97,8 @@ public class ViessmannApi implements AccessTokenRefreshListener {
 
     private @NonNullByDefault({}) ViessmannAuth viessmannAuth;
 
-    private @Nullable AccessTokenResponse accessTokenResponse;
-    private @Nullable TokenResponseDTO accessTokenResponseDTO;
+    // private @Nullable AccessTokenResponse accessTokenResponse;
+    // private @Nullable TokenResponseDTO accessTokenResponseDTO;
 
     public ViessmannApi(final ViessmannBridgeHandler bridgeHandler, final String apiKey, final int apiTimeout,
             HttpClient httpClient, String user, String password, String installationId, String gatewaySerial) {
@@ -172,7 +171,7 @@ public class ViessmannApi implements AccessTokenRefreshListener {
                 }
             }
             viessmannAuth.doAuthorization();
-            accessTokenResponseDTO = localAccessTokenResponseDTO;
+            // accessTokenResponseDTO = localAccessTokenResponseDTO;
             isAuthorized = true;
         } catch (RuntimeException e) {
             if (logger.isDebugEnabled()) {
@@ -192,9 +191,9 @@ public class ViessmannApi implements AccessTokenRefreshListener {
         return isAuthorized;
     }
 
-    @Override
-    public void onAccessTokenResponse(AccessTokenResponse accessTokenResponse) {
-    }
+    // @Override
+    // public void onAccessTokenResponse(AccessTokenResponse accessTokenResponse) {
+    // }
 
     public void checkExpiringToken() {
         logger.debug("Checking if new access token is needed...");

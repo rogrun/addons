@@ -7,8 +7,9 @@ _It provides features like the ViCare-App._
 ## Note / Important
 
 You have to register your ViCare Account at the Viessmann developer portal and create a API Key (Client ID).
+
 * `name` - `i.e. openhab`
-* `Google reCAPTCHA` - `Google reCAPTCHA`
+* `Google reCAPTCHA` - `off`
 * `Redicect URI` - `http://localhost:8080/viessmann-api/authcode/`
 
 ## Supported Things

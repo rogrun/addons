@@ -88,7 +88,7 @@ public class ViessmannAuth {
     }
 
     public void setRefreshToken(String newRefreshToken) {
-        if (newRefreshToken != refreshToken) {
+        if (!newRefreshToken.equals(refreshToken)) {
             logger.debug("ViessmannAuth: Change refreshToken from {} to {}", refreshToken, newRefreshToken);
             refreshToken = newRefreshToken;
         }
