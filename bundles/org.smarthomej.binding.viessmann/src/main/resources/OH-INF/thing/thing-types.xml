@@ -44,7 +44,7 @@
 			</parameter>
 			<parameter name="apiCallLimit" type="integer" required="false">
 				<label>API call limit</label>
-				<description>The limt how often call the API. It is used for calcutating the time how often the data is queried in
+				<description>The limit how often call the API. It is used for calcutating the time how often the data is queried in
 					seconds</description>
 				<default>1450</default>
 			</parameter>
