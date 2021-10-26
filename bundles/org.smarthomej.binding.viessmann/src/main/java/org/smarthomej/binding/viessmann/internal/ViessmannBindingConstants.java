@@ -35,6 +35,8 @@ public class ViessmannBindingConstants {
 
     public static final Set<ThingTypeUID> DISCOVERABLE_DEVICE_TYPE_UIDS = Set.of(THING_TYPE_DEVICE);
 
+    public static final String COUNT_API_CALLS = "countApiCalls";
+
     // References for needed API identifiers
     public static final String VIESSMANN_HOST = "api.viessmann.com";
     public static final String VIESSMANN_BASE_URL = "https://api.viessmann.com/";

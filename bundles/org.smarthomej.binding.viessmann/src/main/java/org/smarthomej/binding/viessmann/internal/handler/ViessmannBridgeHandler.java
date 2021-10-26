@@ -12,6 +12,9 @@
  */
 package org.smarthomej.binding.viessmann.internal.handler;
 
+import static org.smarthomej.binding.viessmann.internal.ViessmannBindingConstants.*;
+
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +26,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.openhab.core.config.core.Configuration;
+import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
@@ -68,6 +72,8 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     protected @Nullable ViessmannDiscoveryService discoveryService;
 
     private int apiTimeout;
+    private int apiCalls;
+    private boolean countReset = true;
 
     private @Nullable static String newInstallationId;
     private @Nullable static String newGatewaySerial;
@@ -145,6 +151,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         gatewaySerial = config.gatewaySerial;
         apiCallLimit = config.apiCallLimit;
         bufferApiCommands = config.bufferApiCommands;
+        apiCalls = 0;
         newInstallationId = "";
         newGatewaySerial = "";
         Integer value;
@@ -161,6 +168,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     public void getAllDevices() {
         logger.trace("Loading Device List from Viessmann Bridge");
         DeviceDTO allDevices = api.getAllDevices();
+        countApiCalls();
         if (allDevices != null) {
             devicesData = allDevices.data;
             if (devicesData == null) {
@@ -180,6 +188,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
 
     public boolean setData(@Nullable String url, @Nullable String json) {
         if (url != null && json != null) {
+            countApiCalls();
             return api.setData(url, json);
         }
         return false;
@@ -188,6 +197,24 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     private Integer getPollingInterval() {
         Integer interval = (86400 / (apiCallLimit - bufferApiCommands) * devicesList.size()) + 1;
         return interval;
+    }
+
+    private void countApiCalls() {
+        apiCalls++;
+        updateState(COUNT_API_CALLS, DecimalType.valueOf(Integer.toString(apiCalls)));
+    }
+
+    private void checkResetApiCalls() {
+        LocalTime time = LocalTime.now();
+        if (time.isAfter(LocalTime.of(00, 00, 01)) && (time.isBefore(LocalTime.of(01, 00, 00)))) {
+            if (countReset) {
+                logger.debug("Resettig API Call counts");
+                apiCalls = 0;
+                countReset = false;
+            }
+        } else {
+            countReset = true;
+        }
     }
 
     private void pollingFeatures() {
@@ -203,6 +230,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     public void getAllFeaturesByDeviceId(String deviceId) {
         try {
             FeaturesDTO allFeatures = api.getAllFeatures(deviceId);
+            countApiCalls();
             if (allFeatures != null) {
                 List<FeatureDataDTO> featuresData = allFeatures.data;
                 for (FeatureDataDTO featureDataDTO : featuresData) {
@@ -221,6 +249,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
                 logger.debug("Refresh job scheduled to run every {} seconds for '{}'", pollingIntervalS,
                         getThing().getUID());
                 api.checkExpiringToken();
+                checkResetApiCalls();
                 pollingFeatures();
             }, 1, TimeUnit.SECONDS.toSeconds(pollingIntervalS), TimeUnit.SECONDS);
         }
