@@ -31,6 +31,7 @@ public class ViessmannConfiguration {
     public @Nullable String apiKey;
     public @Nullable String installationId;
     public @Nullable String gatewaySerial;
-    public int pollingInterval = 20;
     public int apiTimeout = 120;
+    public int apiCallLimit = 1450;
+    public int bufferApiCommands = 450;
 }

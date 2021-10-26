@@ -58,12 +58,12 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
 
     private @NonNullByDefault({}) ViessmannApi api;
     private @NonNullByDefault({}) String apiKey;
-    // private @NonNullByDefault({}) String authToken;
     private @NonNullByDefault({}) String user;
     private @NonNullByDefault({}) String password;
     private @NonNullByDefault({}) String installationId;
     private @NonNullByDefault({}) String gatewaySerial;
-    private @NonNullByDefault({}) int pollingInterval;
+    private @NonNullByDefault({}) int apiCallLimit;
+    private @NonNullByDefault({}) int bufferApiCommands;
 
     protected @Nullable ViessmannDiscoveryService discoveryService;
 
@@ -82,10 +82,6 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         newInstallationId = newInstallation;
         newGatewaySerial = newGateway;
     }
-
-    // private @Nullable List<DeviceData> getDevicesData() {
-    // return devicesData;
-    // }
 
     /**
      * get the devices list (needed for discovery)
@@ -147,7 +143,8 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         apiKey = config.apiKey;
         installationId = config.installationId;
         gatewaySerial = config.gatewaySerial;
-        pollingInterval = config.pollingInterval;
+        apiCallLimit = config.apiCallLimit;
+        bufferApiCommands = config.bufferApiCommands;
         newInstallationId = "";
         newGatewaySerial = "";
         Integer value;
@@ -158,7 +155,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
             setConfigInstallationGatewayId();
         }
         getAllDevices();
-        startViessmannBridgePolling(pollingInterval);
+        startViessmannBridgePolling(getPollingInterval());
     }
 
     public void getAllDevices() {
@@ -186,6 +183,11 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
             return api.setData(url, json);
         }
         return false;
+    }
+
+    private Integer getPollingInterval() {
+        Integer interval = (86400 / (apiCallLimit - bufferApiCommands) * devicesList.size()) + 1;
+        return interval;
     }
 
     private void pollingFeatures() {
@@ -216,11 +218,11 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         ScheduledFuture<?> currentPollingJob = viessmannBridgePollingJob;
         if (currentPollingJob == null) {
             viessmannBridgePollingJob = scheduler.scheduleWithFixedDelay(() -> {
-                logger.debug("Refresh job scheduled to run every {} seconds for '{}'",
-                        pollingIntervalS * devicesList.size(), getThing().getUID());
+                logger.debug("Refresh job scheduled to run every {} seconds for '{}'", pollingIntervalS,
+                        getThing().getUID());
                 api.checkExpiringToken();
                 pollingFeatures();
-            }, 1, TimeUnit.SECONDS.toSeconds(pollingIntervalS * devicesList.size()), TimeUnit.SECONDS);
+            }, 1, TimeUnit.SECONDS.toSeconds(pollingIntervalS), TimeUnit.SECONDS);
         }
     }
 
