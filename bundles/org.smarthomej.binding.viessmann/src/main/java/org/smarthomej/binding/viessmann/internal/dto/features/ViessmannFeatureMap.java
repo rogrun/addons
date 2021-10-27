@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.smarthomej.binding.viessmann.internal;
+package org.smarthomej.binding.viessmann.internal.dto.features;
 
 import java.util.HashMap;
 import java.util.Map;

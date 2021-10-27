@@ -10,22 +10,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.smarthomej.binding.viessmann.internal;
+package org.smarthomej.binding.viessmann.internal.config;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
- * The {@link ViessmannConfiguration} class contains fields mapping thing configuration parameters.
+ * The {@link BridgeConfiguration} class contains fields mapping thing configuration parameters.
  *
  * @author Ronny Grun - Initial contribution
  */
 @NonNullByDefault
-public class ViessmannConfiguration {
+public class BridgeConfiguration {
 
-    /**
-     * Sample configuration parameters. Replace with your own.
-     */
     public @Nullable String user;
     public @Nullable String password;
     public @Nullable String apiKey;

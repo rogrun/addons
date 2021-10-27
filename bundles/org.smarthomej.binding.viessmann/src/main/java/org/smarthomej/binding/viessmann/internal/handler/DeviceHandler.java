@@ -35,13 +35,13 @@ import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.smarthomej.binding.viessmann.internal.ViessmannFeatureMap;
 import org.smarthomej.binding.viessmann.internal.config.ThingsConfig;
 import org.smarthomej.binding.viessmann.internal.dto.ThingMessageDTO;
 import org.smarthomej.binding.viessmann.internal.dto.ViessmannMessage;
 import org.smarthomej.binding.viessmann.internal.dto.features.FeatureCommands;
 import org.smarthomej.binding.viessmann.internal.dto.features.FeatureDataDTO;
 import org.smarthomej.binding.viessmann.internal.dto.features.FeatureProperties;
+import org.smarthomej.binding.viessmann.internal.dto.features.ViessmannFeatureMap;
 
 import com.google.gson.Gson;
 
@@ -183,14 +183,6 @@ public class DeviceHandler extends ViessmannThingHandler {
 
     @Override
     public void handleUpdateChannel(ViessmannMessage msg) {
-        /*
-         * if (!(msg instanceof UsedContactInfoMessage)) {
-         * return;
-         * }
-         * UsedContactInfoMessage mbMsg = (UsedContactInfoMessage) msg;
-         * createChannel(mbMsg.address, mbMsg.name);
-         * logger.trace("handleUpdateChannel: {}", mbMsg.address);
-         */
         logger.trace("handleUpdateChannel: {}", msg);
     }
 
@@ -264,7 +256,6 @@ public class DeviceHandler extends ViessmannThingHandler {
                             valueEntry = prop.slope.value.toString();
                             break;
                         case "entries":
-                            // Used for Schedule
                             msg.setFeatureName(featureName);
                             msg.setFeature(featureDataDTO.feature + "#schedule");
                             typeEntry = prop.entries.type.toString();

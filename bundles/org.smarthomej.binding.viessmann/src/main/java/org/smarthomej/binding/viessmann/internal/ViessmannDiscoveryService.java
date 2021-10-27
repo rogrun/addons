@@ -118,8 +118,7 @@ public class ViessmannDiscoveryService extends AbstractDiscoveryService implemen
         }
 
         ThingUID uid = new ThingUID(THING_TYPE_DEVICE, bridgeUID, address);
-        Map<String, Object> properties = Map.ofEntries( //
-                // entry(PROPERTY_ADDRESS, Integer.parseInt(address)), //
+        Map<String, Object> properties = Map.ofEntries(
                 entry(PROPERTY_ID, address));
         String label = "Viessmann Device " + address;
         DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withProperties(properties)

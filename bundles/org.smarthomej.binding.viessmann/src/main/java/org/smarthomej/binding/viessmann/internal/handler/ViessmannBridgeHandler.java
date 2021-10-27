@@ -37,9 +37,9 @@ import org.openhab.core.thing.binding.ThingHandlerService;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.smarthomej.binding.viessmann.internal.ViessmannConfiguration;
 import org.smarthomej.binding.viessmann.internal.ViessmannDiscoveryService;
 import org.smarthomej.binding.viessmann.internal.api.ViessmannApi;
+import org.smarthomej.binding.viessmann.internal.config.BridgeConfiguration;
 import org.smarthomej.binding.viessmann.internal.dto.device.DeviceDTO;
 import org.smarthomej.binding.viessmann.internal.dto.device.DeviceData;
 import org.smarthomej.binding.viessmann.internal.dto.features.FeatureDataDTO;
@@ -107,7 +107,6 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
 
     public void unsetPollingDevice(String deviceId) {
         if (pollingDevicesList.contains(deviceId)) {
-            // Remove device from list
             pollingDevicesList.remove(deviceId);
         }
     }
@@ -143,7 +142,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     public void initialize() {
         logger.debug("Initialize Viessmann Accountservice");
 
-        ViessmannConfiguration config = getConfigAs(ViessmannConfiguration.class);
+        BridgeConfiguration config = getConfigAs(BridgeConfiguration.class);
         user = config.user;
         password = config.password;
         apiKey = config.apiKey;
