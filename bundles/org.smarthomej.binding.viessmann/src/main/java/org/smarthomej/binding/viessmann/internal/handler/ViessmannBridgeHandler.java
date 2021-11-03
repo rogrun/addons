@@ -14,6 +14,7 @@ package org.smarthomej.binding.viessmann.internal.handler;
 
 import static org.smarthomej.binding.viessmann.internal.ViessmannBindingConstants.*;
 
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,6 +80,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     private @Nullable static String newGatewaySerial;
 
     private @Nullable ScheduledFuture<?> viessmannBridgePollingJob;
+    private @Nullable ScheduledFuture<?> viessmannBridgeLimitJob;
 
     public @Nullable List<DeviceData> devicesData;
     protected volatile List<String> devicesList = new ArrayList<>();
@@ -131,6 +133,7 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
     @Override
     public void dispose() {
         stopViessmannBridgePolling();
+        stopViessmannBridgeLimitReset();
     }
 
     @Override
@@ -161,7 +164,10 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
             setConfigInstallationGatewayId();
         }
         getAllDevices();
-        startViessmannBridgePolling(getPollingInterval());
+        if (!devicesList.isEmpty()) {
+            updateBridgeStatus(ThingStatus.ONLINE);
+            startViessmannBridgePolling(getPollingInterval());
+        }
     }
 
     public void getAllDevices() {
@@ -254,12 +260,44 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    private void stopViessmannBridgePolling() {
+    private void startViessmannBridgeLimitReset(Long delay) {
+        ScheduledFuture<?> currentPollingJob = viessmannBridgeLimitJob;
+        if (currentPollingJob == null) {
+            viessmannBridgeLimitJob = scheduler.scheduleWithFixedDelay(() -> {
+                logger.debug("Resetting Limit and reconnect for '{}'", getThing().getUID());
+                api.checkExpiringToken();
+                checkResetApiCalls();
+                getAllDevices();
+                if (!devicesList.isEmpty()) {
+                    updateBridgeStatus(ThingStatus.ONLINE);
+                    startViessmannBridgePolling(getPollingInterval());
+                    stopViessmannBridgeLimitReset();
+                }
+            }, delay, TimeUnit.SECONDS.toSeconds(120), TimeUnit.SECONDS);
+        }
+    }
+
+    public void stopViessmannBridgePolling() {
         ScheduledFuture<?> currentPollingJob = viessmannBridgePollingJob;
         if (currentPollingJob != null) {
             currentPollingJob.cancel(true);
             viessmannBridgePollingJob = null;
         }
+    }
+
+    public void stopViessmannBridgeLimitReset() {
+        ScheduledFuture<?> currentPollingJob = viessmannBridgeLimitJob;
+        if (currentPollingJob != null) {
+            currentPollingJob.cancel(true);
+            viessmannBridgeLimitJob = null;
+        }
+    }
+
+    public void waitForApiCallLimitReset(Long resetLimitMillis) {
+        stopViessmannBridgePolling();
+        Long delay = (resetLimitMillis - Instant.now().toEpochMilli()) / 1000;
+        stopViessmannBridgeLimitReset();
+        startViessmannBridgeLimitReset(delay);
     }
 
     /**

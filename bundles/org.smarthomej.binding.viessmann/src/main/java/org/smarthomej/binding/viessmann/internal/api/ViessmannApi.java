@@ -24,6 +24,8 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.openhab.core.io.net.http.HttpUtil;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smarthomej.binding.viessmann.internal.dto.device.DeviceDTO;
@@ -46,8 +48,6 @@ import com.google.gson.GsonBuilder;
  */
 @NonNullByDefault
 public class ViessmannApi {
-    // public class ViessmannApi implements AccessTokenRefreshListener {
-
     private static final Gson GSON = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 
     private static final int TOKEN_MIN_DIFF_MS = (int) TimeUnit.DAYS.toMillis(2);
@@ -97,15 +97,11 @@ public class ViessmannApi {
 
     private @NonNullByDefault({}) ViessmannAuth viessmannAuth;
 
-    // private @Nullable AccessTokenResponse accessTokenResponse;
-    // private @Nullable TokenResponseDTO accessTokenResponseDTO;
-
     public ViessmannApi(final ViessmannBridgeHandler bridgeHandler, final String apiKey, final int apiTimeout,
             HttpClient httpClient, String user, String password, String installationId, String gatewaySerial) {
         this.bridgeHandler = bridgeHandler;
         this.apiKey = apiKey;
         this.apiTimeout = apiTimeout;
-        // this.oAuthFactory = oAuthFactory;
         this.httpClient = httpClient;
         this.user = user;
         this.password = password;
@@ -123,16 +119,6 @@ public class ViessmannApi {
         String bridgeUID = bridgeHandler.getThing().getUID().getAsString();
         logger.debug("API: Creating OAuth Client Service for {}", bridgeUID);
         viessmannAuth = new ViessmannAuth(bridgeHandler, apiKey, apiTimeout, httpClient, user, password);
-    }
-
-    public void deleteOAuthClientService() {
-        String bridgeUID = bridgeHandler.getThing().getUID().getAsString();
-        logger.debug("API: Deleting OAuth Client Service for {}", bridgeUID);
-    }
-
-    public void closeOAuthClientService() {
-        String bridgeUID = bridgeHandler.getThing().getUID().getAsString();
-        logger.debug("API: Closing OAuth Client Service for {}", bridgeUID);
     }
 
     /**
@@ -171,7 +157,6 @@ public class ViessmannApi {
                 }
             }
             viessmannAuth.doAuthorization();
-            // accessTokenResponseDTO = localAccessTokenResponseDTO;
             isAuthorized = true;
         } catch (RuntimeException e) {
             if (logger.isDebugEnabled()) {
@@ -190,10 +175,6 @@ public class ViessmannApi {
         }
         return isAuthorized;
     }
-
-    // @Override
-    // public void onAccessTokenResponse(AccessTokenResponse accessTokenResponse) {
-    // }
 
     public void checkExpiringToken() {
         logger.debug("Checking if new access token is needed...");
@@ -276,7 +257,16 @@ public class ViessmannApi {
             if (response.indexOf("viErrorId") >= 0) {
                 ViErrorDTO viError = GSON.fromJson(response, ViErrorDTO.class);
                 if (viError != null) {
-                    logger.warn("ViError: {}", viError.getMessage());
+                    if (viError.getStatusCode() == 429) {
+                        logger.warn("ViError: {} | Resetting Limit at {}", viError.getMessage(),
+                                viError.getExtendedPayload().getLimitRestetDateTime());
+                        bridgeHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                                String.format("%s Resetting Limit at %s", viError.getMessage(),
+                                        viError.getExtendedPayload().getLimitRestetDateTime()));
+                        bridgeHandler.waitForApiCallLimitReset(viError.getExtendedPayload().getLimitReset());
+                    } else {
+                        logger.warn("ViError: {}", viError.getMessage());
+                    }
                     return null;
                 }
             }
@@ -299,8 +289,16 @@ public class ViessmannApi {
             if (response.indexOf("viErrorId") >= 0) {
                 ViErrorDTO viError = GSON.fromJson(response, ViErrorDTO.class);
                 if (viError != null) {
-                    logger.warn("ViError: {} | Reason: {}", viError.getMessage(),
-                            viError.getExtendedPayload().getReason());
+                    if (viError.getStatusCode() == 429) {
+                        logger.warn("ViError: {} | Reseting Limit at {}", viError.getMessage(),
+                                viError.getExtendedPayload().getLimitRestetDateTime());
+                        bridgeHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                                String.format("API Call limit reached. Reset at {}",
+                                        viError.getExtendedPayload().getLimitRestetDateTime()));
+                    } else {
+                        logger.warn("ViError: {} | Reason: {}", viError.getMessage(),
+                                viError.getExtendedPayload().getReason());
+                    }
                 }
                 return false;
             }

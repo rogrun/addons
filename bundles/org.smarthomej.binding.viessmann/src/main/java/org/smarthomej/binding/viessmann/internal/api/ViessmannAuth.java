@@ -212,8 +212,6 @@ public class ViessmannAuth {
         ViessmannApi.setTokenResponseDTO(tokenResponse);
         refreshToken = tokenResponse.refreshToken;
         ViessmannApi.setTokenExpiryDate(TimeUnit.SECONDS.toNanos(tokenResponse.expiresIn));
-
-        bridgeHandler.updateBridgeStatus(ThingStatus.ONLINE);
         setState(ViessmannAuthState.COMPLETE);
     }
 
@@ -243,8 +241,6 @@ public class ViessmannAuth {
         }
         ViessmannApi.setTokenResponseDTO(tokenResponse);
         ViessmannApi.setTokenExpiryDate(TimeUnit.SECONDS.toNanos(tokenResponse.expiresIn));
-
-        bridgeHandler.updateBridgeStatus(ThingStatus.ONLINE);
         setState(ViessmannAuthState.COMPLETE);
     }
 
