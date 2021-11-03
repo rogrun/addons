@@ -43,6 +43,7 @@ The `bridge` thing supports the connection to the Viessmann API.
 _All configurations are made in the UI_
 
 ## Channels
+
 ### `bridge`
 
 | channel         | type   | RO/RW | description                          |
@@ -50,6 +51,7 @@ _All configurations are made in the UI_
 | `countApiCalls` | Number |   RO  | How often the API is called this day |
 
 ### `device`
+
 _There are many different channels. The channels are automaticaly generaten for all available fetaures_
 
 ## Full Example
