@@ -229,6 +229,11 @@
 		<item-type>String</item-type>
 		<label>Last error message</label>
 		<category>Text</category>
+    
+	<channel-type id="type-setMode">
+		<item-type>String</item-type>
+		<label>Set Mode</label>
+		<category>heating</category>
 		<state readOnly="false"/>
 	</channel-type>
 
