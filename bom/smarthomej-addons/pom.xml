@@ -33,6 +33,11 @@
     </dependency>
     <dependency>
       <groupId>org.smarthomej.addons.bundles</groupId>
+      <artifactId>org.smarthomej.binding.aquatemp</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.smarthomej.addons.bundles</groupId>
       <artifactId>org.smarthomej.binding.deconz</artifactId>
       <version>${project.version}</version>
     </dependency>
