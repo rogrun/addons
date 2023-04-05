@@ -211,8 +211,6 @@ public class DeviceHandler extends AquatempThingHandler {
 
     @Override
     public void handleUpdateError(ErrorDTO error) {
-        // updateStatus(ThingStatus.ONLINE);
-
         if (error.totalSize > 0) {
             updateState("errorIsActive", OnOffType.ON);
             ErrorObjectResult obj = error.objectResult.get(0);

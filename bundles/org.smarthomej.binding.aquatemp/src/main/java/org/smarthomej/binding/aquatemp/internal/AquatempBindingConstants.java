@@ -40,24 +40,14 @@ public class AquatempBindingConstants {
     public static final String COUNT_API_CALLS = "countApiCalls";
 
     // References for needed API identifiers
-    public static final String AQUATEMP_HOST = "api.viessmann.com";
     public static final String AQUATEMP_BASE_URL = "https://cloud.linked-go.com/cloudservice/api";
     public static final String IAM_BASE_URL = "https://cloud.linked-go.com/cloudservice/api";
     public static final String AQUATEMP_AUTHORIZE_URL = IAM_BASE_URL + "/app/user/login.json";
-    public static final String AQUATEMP_TOKEN_URL = IAM_BASE_URL + "idp/v3/token";
-    public static final String AQUATEMP_SCOPE = "IoT%20User%20offline_access";
 
     public static final int REFRESH_TOKEN_EXPIRE = 15552000;
 
     public static final int API_TIMEOUT_MS = 20000;
     public static final String PROPERTY_ID = "deviceId";
-
-    // public static final Map<String, String> FEATURES_MAP =
-    // ResourceUtil.readProperties(AquatempBindingConstants.class,
-    // "features.properties");
-
-    // public static final Map<String, String> FEATURE_DESCRIPTION_MAP = ResourceUtil
-    // .readProperties(AquatempBindingConstants.class, "featuresDescription.properties");
 
     public static final Map<String, String> UNIT_MAP = Map.of( //
             "celsius", SIUnits.CELSIUS.getSymbol(), //
@@ -70,13 +60,5 @@ public class AquatempBindingConstants {
             "liter", Units.LITRE.toString(), //
             "cubicMeter", SIUnits.CUBIC_METRE.toString());
 
-    public static final Map<String, String> SUB_CHANNEL_TYPE_MAP = Map.of( //
-            "cubicMeter", "type-volume", //
-            "kilowattHour", "type-energy");
-
-    // public static final Map<String, String> MODES_MAP = ResourceUtil.readProperties(AquatempBindingConstants.class,
-    // "modes.properties");
-
     public static final String CHANNEL_RUN_QUERY_ONCE = "runQueryOnce";
-    public static final String CHANNEL_RUN_ERROR_QUERY_ONCE = "runErrorQueryOnce";
 }

@@ -122,7 +122,7 @@ public class AquatempDiscoveryService extends AbstractDiscoveryService implement
         Map<String, String> deviceNameMap = bridge.getDeviceNameMap();
         ThingUID uid = new ThingUID(THING_TYPE_DEVICE, bridgeUID, address);
         Map<String, Object> properties = Map.ofEntries(entry(PROPERTY_ID, address));
-        String label = "AquaTemp Device " + deviceNameMap.get(address);
+        String label = "Aqua Temp Device " + deviceNameMap.get(address);
         DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withProperties(properties)
                 .withRepresentationProperty(PROPERTY_ID).withLabel(label).build();
         thingDiscovered(result);

@@ -1,14 +1,14 @@
-# AquaTemp Binding
+# Aqua Temp Binding
 
 <img src="org.smarthomej.binding.aquatemp/doc/AquaTempLogo.png" width="140"/>
 
-This binding connects AquaTemp Devices.
+This binding connects Aqua Temp Devices.
 
 ## Supported Things
 
 The binding supports the following thing types:
 
-* `bridge` - Supports connection AquaTemp API.
+* `bridge` - Supports connection Aqua Temp API.
 * `device` - Provides a device which is connected (Discovery)
 
 ## Discovery
@@ -17,10 +17,10 @@ Discovery is supported for all devices connected in your account.
 
 ## Binding Configuration
 
-The `bridge` thing supports the connection to the AquaTemp API.
+The `bridge` thing supports the connection to the Aqua Temp API.
  
-* `user` (required) The E-Mail address which is registered for the AquaTemp App
-* `password` (required) The password which is registered for the AquaTemp App
+* `user` (required) The E-Mail address which is registered for the Aqua Temp App
+* `password` (required) The password which is registered for the Aqua Temp App
 * `apiCallLimit` (default = 1450) The limit how often call the API (*) 
 * `bufferApiCommands` (default = 450) The buffer for commands (*)
 * `pollingInterval` (default = 0) How often the available devices should be queried in seconds (**) 

@@ -12,7 +12,6 @@
  */
 package org.smarthomej.binding.aquatemp.internal.dto.device;
 
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 /**

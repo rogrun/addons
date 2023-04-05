@@ -149,24 +149,11 @@
 		</state>
 	</channel-type>
 
-	<channel-type id="type-string">
-		<item-type>String</item-type>
-		<label>String</label>
-		<category>Text</category>
-		<state readOnly="false"/>
-	</channel-type>
-
 	<channel-type id="type-string-readOnly">
 		<item-type>String</item-type>
 		<label>String</label>
 		<category>Text</category>
 		<state readOnly="true"/>
-	</channel-type>
-
-	<channel-type id="type-Schedule">
-		<item-type>String</item-type>
-		<label>Schedule</label>
-		<category>Time</category>
 	</channel-type>
 
 	<channel-type id="type-boolean">
@@ -188,23 +175,10 @@
 		<category>Switch</category>
 	</channel-type>
 
-	<channel-type id="runErrorQueryOnce" advanced="true">
-		<item-type>Switch</item-type>
-		<label>Run error query once</label>
-		<category>Error</category>
-	</channel-type>
-
 	<channel-type id="errorIsActive">
 		<item-type>Switch</item-type>
 		<label>Error is active</label>
 		<category>Error</category>
-	</channel-type>
-
-	<channel-type id="lastErrorMessage">
-		<item-type>String</item-type>
-		<label>Last error message</label>
-		<category>Text</category>
-		<state readOnly="false"/>
 	</channel-type>
 
 </thing:thing-descriptions>
