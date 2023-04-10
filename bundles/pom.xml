@@ -24,6 +24,7 @@
     <!-- bindings -->
     <module>org.smarthomej.binding.androiddebugbridge</module>
     <module>org.smarthomej.binding.amazonechocontrol</module>
+    <module>org.smarthomej.binding.aquatemp</module>
     <module>org.smarthomej.binding.http</module>
     <module>org.smarthomej.binding.knx</module>
     <module>org.smarthomej.binding.mail</module>
