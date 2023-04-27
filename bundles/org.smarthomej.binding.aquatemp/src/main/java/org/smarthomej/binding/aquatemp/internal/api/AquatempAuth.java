@@ -14,6 +14,7 @@ package org.smarthomej.binding.aquatemp.internal.api;
 
 import static org.smarthomej.binding.aquatemp.internal.AquatempBindingConstants.*;
 
+import java.net.CookieStore;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -26,7 +27,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.util.HttpCookieStore;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.slf4j.Logger;
@@ -170,7 +170,11 @@ public class AquatempAuth {
         Request request = httpClient.newRequest(url).timeout(API_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 .method(HttpMethod.POST).header("Content-Type", "application/json")
                 .content(new StringContentProvider(json.toString(), "utf-8"));
-        httpClient.setCookieStore(new HttpCookieStore.Empty());
+        CookieStore cookieStore = httpClient.getCookieStore();
+        // TODO: Index 0 out of bounds when cookie is not set
+        if (cookieStore.get(AQUATEMP_URI).size() > 0) {
+            cookieStore.remove(AQUATEMP_URI, cookieStore.get(AQUATEMP_URI).get(0));
+        }
         try {
             ContentResponse contentResponse = request.send();
             switch (contentResponse.getStatus()) {

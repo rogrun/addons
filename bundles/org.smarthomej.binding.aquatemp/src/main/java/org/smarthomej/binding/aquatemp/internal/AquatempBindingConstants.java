@@ -12,6 +12,7 @@
  */
 package org.smarthomej.binding.aquatemp.internal;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +44,8 @@ public class AquatempBindingConstants {
     public static final String AQUATEMP_BASE_URL = "https://cloud.linked-go.com/cloudservice/api";
     public static final String IAM_BASE_URL = "https://cloud.linked-go.com/cloudservice/api";
     public static final String AQUATEMP_AUTHORIZE_URL = IAM_BASE_URL + "/app/user/login.json";
+
+    public static final URI AQUATEMP_URI = URI.create("http://cloud.linked-go.com");
 
     public static final int REFRESH_TOKEN_EXPIRE = 15552000;
 

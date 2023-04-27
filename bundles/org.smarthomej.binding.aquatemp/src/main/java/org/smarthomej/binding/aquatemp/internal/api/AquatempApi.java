@@ -94,6 +94,7 @@ public class AquatempApi {
     private @Nullable String xToken;
 
     public void setToken(String xToken) {
+        logger.debug("Set xToken from {} to {}", this.xToken, xToken);
         this.xToken = xToken;
     }
 
