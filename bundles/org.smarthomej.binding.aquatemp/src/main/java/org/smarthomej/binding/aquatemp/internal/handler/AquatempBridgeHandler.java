@@ -194,7 +194,8 @@ public class AquatempBridgeHandler extends BaseBridgeHandler {
             }
         } catch (AquatempCommunicationException e) {
             handler.updateThingStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                    "Device not reachable");
+                    "Device not reachable | {}");
+            logger.trace("Device not reachable | {}", e.getMessage());
         } catch (JsonSyntaxException | IllegalStateException e) {
             logger.warn("Parsing Aquatemp response fails: {}", e.getMessage());
         }
@@ -261,17 +262,19 @@ public class AquatempBridgeHandler extends BaseBridgeHandler {
                 handler.handleUpdate(allData);
             } else {
                 handler.updateThingStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                        "Device not reachable");
+                        "Device not reachable | Data is NULL");
             }
         } catch (AquatempCommunicationException e) {
             handler.updateThingStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                     "Device not reachable");
+            logger.trace("Device not reachable | {}", e.getMessage());
         } catch (JsonSyntaxException | IllegalStateException e) {
             logger.warn("Parsing Aquatemp response fails: {}", e.getMessage());
         }
     }
 
     private void checkDeviceStatus(DeviceHandler handler) {
+        logger.debug("Checking device status");
         String deviceId = handler.getDeviceId();
         if (allDevices != null) {
             devicesData = allDevices.objectResult;
@@ -285,6 +288,7 @@ public class AquatempBridgeHandler extends BaseBridgeHandler {
                         } else {
                             handler.updateThingStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                                     "Device not reachable");
+                            logger.trace("Device not reachable | OFFLINE");
                         }
                     }
                 }

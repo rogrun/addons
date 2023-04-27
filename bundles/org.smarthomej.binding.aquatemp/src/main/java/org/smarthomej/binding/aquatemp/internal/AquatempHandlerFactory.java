@@ -31,7 +31,6 @@ import org.openhab.core.thing.binding.ThingHandlerFactory;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.http.HttpService;
 import org.smarthomej.binding.aquatemp.internal.handler.AquatempBridgeHandler;
 import org.smarthomej.binding.aquatemp.internal.handler.DeviceHandler;
 
@@ -51,7 +50,7 @@ public class AquatempHandlerFactory extends BaseThingHandlerFactory {
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_BRIDGE, THING_TYPE_DEVICE);
 
     @Activate
-    public AquatempHandlerFactory(@Reference HttpService httpService, @Reference HttpClientFactory httpClientFactory,
+    public AquatempHandlerFactory(@Reference HttpClientFactory httpClientFactory,
             @Reference StorageService storageService) {
         this.httpClient = httpClientFactory.getCommonHttpClient();
         this.storageService = storageService;
