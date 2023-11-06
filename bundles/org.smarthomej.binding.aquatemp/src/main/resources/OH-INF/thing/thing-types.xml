@@ -86,7 +86,7 @@
 			<channel id="mode" typeId="type-mode">
 				<label>Mode</label>
 			</channel>
-			<channel id="consumption" typeId="type-energy">
+			<channel id="consumption" typeId="type-power">
 				<label>Consumption</label>
 			</channel>
 			<channel id="errorMessage" typeId="type-string-readOnly">
@@ -123,9 +123,9 @@
 		<state min="4" max="37" step="1" pattern="%d %unit%" readOnly="false"/>
 	</channel-type>
 
-	<channel-type id="type-energy">
-		<item-type>Number:Energy</item-type>
-		<label>Energy</label>
+	<channel-type id="type-power">
+		<item-type>Number:Power</item-type>
+		<label>Power</label>
 		<state pattern="%d %unit%" readOnly="true"/>
 	</channel-type>
 
