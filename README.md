@@ -1,9 +1,9 @@
 # Smarthome/J Add-ons
 
 [![EPL-2.0](https://img.shields.io/badge/license-EPL%202-green.svg)](https://opensource.org/licenses/EPL-2.0)
-[![Build Status 4.0.x](https://github.com/smarthomej/addons/actions/workflows/ci-build-40.yml/badge.svg?branch=4.0.x)](https://github.com/smarthomej/addons/actions/workflows/ci-build-40.yml)
-[![Build Status 4.1.x](https://github.com/smarthomej/addons/actions/workflows/ci-build-41.yml/badge.svg?branch=4.1.x)](https://github.com/smarthomej/addons/actions/workflows/ci-build-41.yml)
 [![Build Status 4.2.x](https://github.com/smarthomej/addons/actions/workflows/ci-build-42.yml/badge.svg?branch=4.2.x)](https://github.com/smarthomej/addons/actions/workflows/ci-build-42.yml)
+[![Build Status 4.3.x](https://github.com/smarthomej/addons/actions/workflows/ci-build-43.yml/badge.svg?branch=4.3.x)](https://github.com/smarthomej/addons/actions/workflows/ci-build-43.yml)
+[![Build Status 5.0.x](https://github.com/smarthomej/addons/actions/workflows/ci-build-50.yml/badge.svg?branch=5.0.x)](https://github.com/smarthomej/addons/actions/workflows/ci-build-50.yml)
 
 This repository contains the add-ons that are implemented on top of [openHAB Core APIs](https://github.com/openhab/openhab-core).
 Some parts of this repository are forked from [openHAB Addons](https://github.com/openhab/openhab-addons).
@@ -17,9 +17,9 @@ Due to limitations openHAB Core, please make sure to disable "Show incompatible 
 ### Compatibility
 
 Due to a breaking changes in openHAB, older and newer versions of bundles are not compatible in every combination.
-Currently the last two stable releases of openHAB (4.0 and 4.1) as well as the current development version (4.2, only latest snapshots) are supported.
+Currently the last two stable releases of openHAB (4.2 and 4.3) as well as the current development version (5.0, only latest snapshots) are supported.
 
-The downloads for openHAB 3.2-3.4 are still available, but these versions will no longer receive updates.
+The downloads for openHAB 3.2-4.1 are still available, but these versions will no longer receive updates.
 Please consider upgrading your openHAB installation.
 
 Starting with 4.0, the version numbers between openHAB Core and SmartHome/J are the same, i.e. SmartHome/J 4.0.x is compatible with openHAB 4.0.x.
