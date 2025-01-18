@@ -126,8 +126,9 @@ public class HttpRequestBuilder {
             }
         }
 
-        if (params.requestContent() != null) {
-            byte[] contentBytes = params.requestContent().getBytes(StandardCharsets.UTF_8);
+        String requestContent = params.requestContent();
+        if (requestContent != null) {
+            byte[] contentBytes = requestContent.getBytes(StandardCharsets.UTF_8);
             request.header(CONTENT_TYPE, params.json() ? APPLICATION_JSON_UTF_8.asString() : FORM_ENCODED.asString());
             request.header(CONTENT_LENGTH, Integer.toString(contentBytes.length));
             if (POST.equals(params.method())) {
