@@ -32,22 +32,19 @@ import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.storage.Storage;
-import org.openhab.core.thing.Bridge;
-import org.openhab.core.thing.ChannelUID;
-import org.openhab.core.thing.Thing;
-import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.*;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
+import org.openhab.core.thing.binding.BridgeHandler;
 import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.thing.binding.ThingHandlerService;
 import org.openhab.core.thing.util.ThingHandlerHelper;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.smarthomej.binding.viessmann.internal.ViessmannDiscoveryService;
-import org.smarthomej.binding.viessmann.internal.api.ViessmannApiBridge;
+import org.smarthomej.binding.viessmann.internal.ViessmannGatewayDiscoveryService;
+import org.smarthomej.binding.viessmann.internal.api.ViessmannApiGateway;
 import org.smarthomej.binding.viessmann.internal.api.ViessmannCommunicationException;
-import org.smarthomej.binding.viessmann.internal.config.BridgeConfiguration;
+import org.smarthomej.binding.viessmann.internal.config.GatewayConfiguration;
 import org.smarthomej.binding.viessmann.internal.dto.device.DeviceDTO;
 import org.smarthomej.binding.viessmann.internal.dto.device.DeviceData;
 import org.smarthomej.binding.viessmann.internal.dto.events.EventsDTO;
@@ -58,12 +55,12 @@ import org.smarthomej.binding.viessmann.internal.interfaces.BridgeInterface;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * The {@link ViessmannBridgeHandler} is responsible for handling the api connection.
+ * The {@link ViessmannGatewayHandler} is responsible for handling the api connection.
  *
  * @author Ronny Grun - Initial contribution
  */
 @NonNullByDefault
-public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeInterface {
+public class ViessmannGatewayHandler extends BaseBridgeHandler implements BridgeInterface {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Storage<String> stateStorage;
@@ -74,9 +71,9 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
     private final HttpClient httpClient;
     private final @Nullable String callbackUrl;
 
-    private @NonNullByDefault({}) ViessmannApiBridge api;
+    private @NonNullByDefault({}) ViessmannApiGateway api;
 
-    protected @Nullable ViessmannDiscoveryService discoveryService;
+    protected @Nullable ViessmannGatewayDiscoveryService discoveryService;
 
     private int apiCalls;
     private boolean countReset = true;
@@ -84,16 +81,20 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
     private @Nullable String newInstallationId;
     private @Nullable String newGatewaySerial;
 
+    private String installationId = "";
+    private String gatewaySerial = "";
+
     private @Nullable ScheduledFuture<?> viessmannBridgePollingJob;
     private @Nullable ScheduledFuture<?> viessmannErrorsPollingJob;
     private @Nullable ScheduledFuture<?> viessmannBridgeLimitJob;
 
     public @Nullable List<DeviceData> devicesData;
     protected final List<String> devicesList = new ArrayList<>();
+    protected final List<DeviceData> discoveredDeviceList = new ArrayList<>();
 
-    private BridgeConfiguration config = new BridgeConfiguration();
+    private GatewayConfiguration config = new GatewayConfiguration();
 
-    public ViessmannBridgeHandler(Bridge bridge, Storage<String> stateStorage, HttpClient httpClient,
+    public ViessmannGatewayHandler(Bridge bridge, Storage<String> stateStorage, HttpClient httpClient,
             @Nullable String callbackUrl) {
         super(bridge);
         this.stateStorage = stateStorage;
@@ -107,13 +108,13 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
     }
 
     /**
-     * get the devices list (needed for discovery)
+     * get the discovered devices list (needed for discovery)
      *
      * @return a list of the all devices
      */
-    public List<String> getDevicesList() {
+    public List<DeviceData> getDiscoveredDeviceList() {
         // return a copy of the list, so we don't run into concurrency problems
-        return new ArrayList<>(devicesList);
+        return new ArrayList<>(discoveredDeviceList);
     }
 
     private void setConfigInstallationGatewayId() {
@@ -121,6 +122,10 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
         conf.put("installationId", newInstallationId);
         conf.put("gatewaySerial", newGatewaySerial);
         updateConfiguration(conf);
+    }
+
+    public List<Thing> getChildren() {
+        return getThing().getThings().stream().filter(Thing::isEnabled).collect(Collectors.toList());
     }
 
     private boolean errorChannelsLinked() {
@@ -151,14 +156,14 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
 
     @Override
     public Collection<Class<? extends ThingHandlerService>> getServices() {
-        return Set.of(ViessmannDiscoveryService.class);
+        return Set.of(ViessmannGatewayDiscoveryService.class);
     }
 
     @Override
     public void initialize() {
-        logger.debug("Initialize Viessmann Accountservice");
+        logger.debug("Initialize Viessmann Gateway");
 
-        BridgeConfiguration config = getConfigAs(BridgeConfiguration.class);
+        GatewayConfiguration config = getConfigAs(GatewayConfiguration.class);
         this.config = config;
         String storedApiCalls = this.stateStorage.get(STORED_API_CALLS);
         if (storedApiCalls != null) {
@@ -168,27 +173,58 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
         }
         newInstallationId = "";
         newGatewaySerial = "";
-        api = new ViessmannApiBridge(this, this.config.apiKey, httpClient, this.config.user, this.config.password,
+
+        this.gatewaySerial = config.gatewaySerial;
+        this.installationId = config.installationId;
+
+        //@formatter:off
+
+        /*
+        api = new ViessmannApiGateway(this, this.config.apiKey, httpClient, this.config.user, this.config.password,
                 this.config.installationId, this.config.gatewaySerial, callbackUrl);
+        */
+
         if (this.config.installationId.isEmpty() || this.config.gatewaySerial.isEmpty()) {
-            setConfigInstallationGatewayId();
+            // setConfigInstallationGatewayId();
         }
 
         if (!config.disablePolling && errorChannelsLinked()) {
-            startViessmannErrorsPolling(config.pollingIntervalErrors);
+            // startViessmannErrorsPolling(config.pollingIntervalErrors);
         }
-
         getAllDevices();
         if (!devicesList.isEmpty()) {
             updateBridgeStatus(ThingStatus.ONLINE);
-            startViessmannBridgePolling(getPollingInterval(), 1);
+            // startViessmannBridgePolling(getPollingInterval(), 1);
         }
+
+        //@formatter:on
+    }
+
+    //@formatter:off
+    private @Nullable BridgeHandler getBridgeHandler () {
+        Bridge bridge = getBridge();
+        if (bridge != null) {
+            BridgeHandler handler = bridge.getHandler();
+            if (handler != null) {
+                if (handler instanceof ViessmannAccountHandler) {
+                    return handler;
+                }
+            }
+        }
+        return null;
     }
 
     public void getAllDevices() {
-        logger.trace("Loading Device List from Viessmann Bridge");
+        logger.trace("Loading Device List from Viessmann Gateway");
         try {
-            DeviceDTO allDevices = api.getAllDevices();
+            DeviceDTO allDevices = new DeviceDTO();
+
+            BridgeHandler handler = getBridgeHandler();
+            if (handler != null) {
+                allDevices = ((ViessmannAccountHandler) handler).getAllDevices(installationId,
+                        gatewaySerial);
+            }
+
             countApiCalls();
             if (allDevices != null) {
                 devicesData = allDevices.data;
@@ -196,27 +232,34 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
                     logger.warn("Device list is empty.");
                 } else {
                     for (DeviceData deviceData : allDevices.data) {
+                        deviceData.setInstallationId(installationId);
                         String deviceId = deviceData.id;
                         String deviceType = deviceData.deviceType;
-                        if (!devicesList.contains(deviceId)) {
+                        if (!"gateway".equals(deviceId) && !devicesList.contains(deviceId)) {
+                            discoveredDeviceList.add(deviceData);
                             devicesList.add(deviceId);
                         }
                         logger.trace("Device ID: {}, Type: {}", deviceId, deviceType);
                     }
                 }
             }
-        } catch (ViessmannCommunicationException e) {
-            updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                    "Installation not reachable");
         } catch (JsonSyntaxException | IllegalStateException e) {
             logger.warn("Parsing Viessmann response fails: {}", e.getMessage());
         }
     }
+    //@formatter:on
 
     public void getDeviceError() {
         logger.trace("Loading error-list from Viessmann Bridge");
+        //@formatter:off
         try {
-            EventsDTO errors = api.getSelectedEvents("device-error");
+            EventsDTO errors = new EventsDTO();
+            String eventType = "device-error";
+            BridgeHandler handler = getBridgeHandler();
+            if (handler != null) {
+                errors = ((ViessmannAccountHandler) handler).getSelectedEvents(eventType, installationId,
+                        gatewaySerial);
+            }
             countApiCalls();
             logger.trace("Errors:{}", errors);
             if (errors != null && !errors.data.isEmpty()) {
@@ -225,18 +268,23 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
                 updateState("lastErrorMessage", StringType.valueOf(state));
                 updateState("errorIsActive", OnOffType.from(active));
             }
+        /*
         } catch (ViessmannCommunicationException e) {
             updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                     "Installation not reachable");
+         */
         } catch (JsonSyntaxException | IllegalStateException e) {
             logger.warn("Parsing Viessmann response fails: {}", e.getMessage());
         }
+        //@formatter:on
     }
 
     public boolean setData(@Nullable String url, @Nullable String json) throws ViessmannCommunicationException {
         if (url != null && json != null) {
-            countApiCalls();
-            return api.setData(url, json);
+            BridgeHandler handler = getBridgeHandler();
+            if (handler != null) {
+                return ((ViessmannAccountHandler) handler).setData(url, json);
+            }
         }
         return false;
     }
@@ -291,8 +339,13 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
             deviceId = handler.getDeviceId();
             logger.debug("Loading features from Device ID: {}", deviceId);
             try {
-                FeaturesDTO allFeatures = api.getAllFeatures(deviceId);
-                countApiCalls();
+                FeaturesDTO allFeatures = null;
+
+                BridgeHandler bridgeHandler = getBridgeHandler();
+                if (bridgeHandler != null) {
+                    allFeatures = ((ViessmannAccountHandler) bridgeHandler).getAllFeatures(deviceId, installationId,
+                            gatewaySerial);
+                }
                 if (allFeatures != null) {
                     List<FeatureDataDTO> featuresData = allFeatures.data;
                     if (featuresData != null && !featuresData.isEmpty()) {
@@ -300,7 +353,10 @@ public class ViessmannBridgeHandler extends BaseBridgeHandler implements BridgeI
                             handler.handleUpdate(featureDataDTO);
                         }
                     } else {
-                        logger.warn("Features of Device ID {} is empty.", deviceId);
+                        String statusMessage = String.format("Features of Device ID %s is empty.", deviceId);
+                        logger.warn(statusMessage);
+                        handler.updateThingStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                                statusMessage);
                     }
                 }
             } catch (ViessmannCommunicationException e) {

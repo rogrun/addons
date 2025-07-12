@@ -22,6 +22,7 @@ import java.util.List;
 public class DeviceData {
     public String gatewaySerial;
     public String id;
+    public String installationId;
     public String boilerSerial;
     public String boilerSerialEditor;
     public String bmuSerial;
@@ -32,4 +33,8 @@ public class DeviceData {
     public String status;
     public String deviceType;
     public List<String> roles = null;
+
+    public void setInstallationId(String installationId) {
+        this.installationId = installationId;
+    }
 }

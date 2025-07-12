@@ -36,27 +36,27 @@ import org.smarthomej.binding.viessmann.internal.dto.installation.Data;
 import org.smarthomej.binding.viessmann.internal.dto.installation.Gateway;
 import org.smarthomej.binding.viessmann.internal.dto.installation.InstallationDTO;
 import org.smarthomej.binding.viessmann.internal.dto.oauth.TokenResponseDTO;
-import org.smarthomej.binding.viessmann.internal.handler.ViessmannAccountHandler;
+import org.smarthomej.binding.viessmann.internal.handler.ViessmannBridgeHandler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * The {@link ViessmannApi} is responsible for managing all communication with
+ * The {@link ViessmannApiBridge} is responsible for managing all communication with
  * the Viessmann API service.
  *
  * @author Ronny Grun - Initial contribution
  */
 @NonNullByDefault
-public class ViessmannApi {
+public class ViessmannApiBridge {
 
     private static final String HTTP_METHOD_GET = "GET";
     private static final String HTTP_METHOD_POST = "POST";
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json";
     private static final String PARAM_VI_ERROR_ID = "viErrorId";
 
-    private final Logger logger = LoggerFactory.getLogger(ViessmannApi.class);
+    private final Logger logger = LoggerFactory.getLogger(ViessmannApiBridge.class);
 
     private static final Gson GSON = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 
@@ -64,7 +64,7 @@ public class ViessmannApi {
 
     public final Properties httpHeaders;
 
-    private final ViessmannAccountHandler accountHandler;
+    private final ViessmannBridgeHandler bridgeHandler;
     private final HttpClient httpClient;
     private final @Nullable String callbackUrl;
 
@@ -78,11 +78,11 @@ public class ViessmannApi {
     private long tokenExpiryDate;
     private long refreshTokenExpiryDate;
 
-    private @NonNullByDefault({}) ViessmannAuth viessmannAuth;
+    private @NonNullByDefault({}) ViessmannAuthBridge viessmannAuth;
 
-    public ViessmannApi(final ViessmannAccountHandler accountHandler, final String apiKey, HttpClient httpClient,
+    public ViessmannApiBridge(final ViessmannBridgeHandler bridgeHandler, final String apiKey, HttpClient httpClient,
             String user, String password, String installationId, String gatewaySerial, @Nullable String callbackUrl) {
-        this.accountHandler = accountHandler;
+        this.bridgeHandler = bridgeHandler;
         this.apiKey = apiKey;
         this.httpClient = httpClient;
         this.user = user;
@@ -97,9 +97,8 @@ public class ViessmannApi {
         createOAuthClientService();
         authorize();
         if (installationId.isEmpty() || gatewaySerial.isEmpty()) {
-            // setInstallationAndGatewayId();
+            setInstallationAndGatewayId();
         }
-        getInstallationsAndGateways();
     }
 
     public Gson getGson() {
@@ -133,9 +132,9 @@ public class ViessmannApi {
     }
 
     public void createOAuthClientService() {
-        String bridgeUID = accountHandler.getThing().getUID().getAsString();
+        String bridgeUID = bridgeHandler.getThing().getUID().getAsString();
         logger.debug("API: Creating OAuth Client Service for {}", bridgeUID);
-        viessmannAuth = new ViessmannAuth(this, accountHandler, apiKey, httpClient, user, password, callbackUrl);
+        viessmannAuth = new ViessmannAuthBridge(this, bridgeHandler, apiKey, httpClient, user, password, callbackUrl);
     }
 
     /**
@@ -212,13 +211,6 @@ public class ViessmannApi {
         return GSON.fromJson(response, DeviceDTO.class);
     }
 
-    public @Nullable DeviceDTO getAllDevices(String installationId, String gatewaySerial)
-            throws ViessmannCommunicationException {
-        String response = executeGet(VIESSMANN_BASE_URL + "iot/v2/equipment/installations/" + installationId
-                + "/gateways/" + gatewaySerial + "/devices");
-        return GSON.fromJson(response, DeviceDTO.class);
-    }
-
     public @Nullable FeaturesDTO getAllFeatures(String deviceId) throws ViessmannCommunicationException {
         String response = executeGet(VIESSMANN_BASE_URL + "iot/v2/features/installations/" + installationId
                 + "/gateways/" + gatewaySerial + "/devices/" + deviceId + "/features/");
@@ -235,31 +227,7 @@ public class ViessmannApi {
         return null;
     }
 
-    public @Nullable FeaturesDTO getAllFeatures(String deviceId, String installationId, String gatewaySerial)
-            throws ViessmannCommunicationException {
-        String response = executeGet(VIESSMANN_BASE_URL + "iot/v2/features/installations/" + installationId
-                + "/gateways/" + gatewaySerial + "/devices/" + deviceId + "/features/");
-        if (response != null) {
-            response = response.replaceAll("\\n", "").replaceAll("\\r", "").replaceAll(" ", "");
-            response = response.replace("enum", "enumValue");
-            int i = response.indexOf("\"entries\":{\"type\":\"array\",\"value\"");
-            while (i > 0) {
-                response = response.substring(0, i) + "\"errorEntries\"" + response.substring(i + 9, response.length());
-                i = response.indexOf("\"entries\":{\"type\":\"array\",\"value\"");
-            }
-            return GSON.fromJson(response, FeaturesDTO.class);
-        }
-        return null;
-    }
-
     public @Nullable EventsDTO getSelectedEvents(String eventType) throws ViessmannCommunicationException {
-        String response = executeGet(VIESSMANN_BASE_URL + "iot/v2/events-history/installations/" + installationId
-                + "/events?eventType=" + eventType);
-        return GSON.fromJson(response, EventsDTO.class);
-    }
-
-    public @Nullable EventsDTO getSelectedEvents(String eventType, String installationId, String gatewaySerial)
-            throws ViessmannCommunicationException {
         String response = executeGet(VIESSMANN_BASE_URL + "iot/v2/events-history/installations/" + installationId
                 + "/events?eventType=" + eventType);
         return GSON.fromJson(response, EventsDTO.class);
@@ -286,44 +254,11 @@ public class ViessmannApi {
 
                 this.installationId = data.id.toString();
                 this.gatewaySerial = gatewaySerial;
-                accountHandler.setInstallationGatewayId(data.id.toString(), gatewaySerial);
+                bridgeHandler.setInstallationGatewayId(data.id.toString(), gatewaySerial);
             }
         } catch (ViessmannCommunicationException | JsonSyntaxException | IllegalStateException e) {
             // should not happen
         }
-    }
-
-    public @Nullable InstallationDTO getInstallationsAndGateways() {
-        logger.debug("[Requesting Installations and Gateway]");
-        InstallationDTO installation = null;
-        try {
-            String response = executeGet(VIESSMANN_BASE_URL + "iot/v2/equipment/installations?includeGateways=true");
-            installation = GSON.fromJson(response, InstallationDTO.class);
-
-            if (installation != null) {
-                // accountHandler.setInstallation(installation);
-                List<Data> listData = installation.data;
-                Data data = listData.get(0);
-                List<Gateway> listGateway = data.gateways;
-                String gatewaySerial = listGateway.get(0).serial;
-                for (Gateway gateway : listGateway) {
-                    if (!"Lancard".equals(gateway.gatewayType)) {
-                        gatewaySerial = gateway.serial;
-                        break;
-                    }
-                }
-
-                logger.debug("Installation ID: {}", data.id);
-                logger.debug("Gateway Serial : {}", gatewaySerial);
-
-                this.installationId = data.id.toString();
-                this.gatewaySerial = gatewaySerial;
-                accountHandler.setInstallationGatewayId(data.id.toString(), gatewaySerial);
-            }
-        } catch (ViessmannCommunicationException | JsonSyntaxException | IllegalStateException e) {
-            // should not happen
-        }
-        return installation;
     }
 
     public boolean setData(String url, String json) throws ViessmannCommunicationException {
@@ -397,10 +332,10 @@ public class ViessmannApi {
                     case HttpStatus.TOO_MANY_REQUESTS_429:
                         logger.warn("ViError: {} | Resetting Limit at {}", viError.getMessage(),
                                 viError.getExtendedPayload().getLimitResetDateTime());
-                        accountHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                        bridgeHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                                 String.format("API Call limit reached. Reset at %s",
                                         viError.getExtendedPayload().getLimitResetDateTime()));
-                        accountHandler.waitForApiCallLimitReset(viError.getExtendedPayload().getLimitReset());
+                        bridgeHandler.waitForApiCallLimitReset(viError.getExtendedPayload().getLimitReset());
                         break;
                     case HttpStatus.BAD_GATEWAY_502:
                         logger.debug("ViError: {} | Device not reachable", viError.getMessage());

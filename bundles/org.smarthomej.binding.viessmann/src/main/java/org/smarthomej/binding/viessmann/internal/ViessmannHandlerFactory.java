@@ -38,7 +38,9 @@ import org.osgi.service.http.HttpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smarthomej.binding.viessmann.internal.handler.DeviceHandler;
+import org.smarthomej.binding.viessmann.internal.handler.ViessmannAccountHandler;
 import org.smarthomej.binding.viessmann.internal.handler.ViessmannBridgeHandler;
+import org.smarthomej.binding.viessmann.internal.handler.ViessmannGatewayHandler;
 
 /**
  * The {@link ViessmannHandlerFactory} is responsible for creating things and thing
@@ -58,7 +60,8 @@ public class ViessmannHandlerFactory extends BaseThingHandlerFactory {
 
     private @Nullable String callbackUrl;
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_BRIDGE, THING_TYPE_DEVICE);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_ACCOUNT, THING_TYPE_GATEWAY,
+            THING_TYPE_BRIDGE, THING_TYPE_DEVICE);
 
     @Activate
     public ViessmannHandlerFactory(@Reference HttpService httpService, @Reference HttpClientFactory httpClientFactory,
@@ -92,7 +95,17 @@ public class ViessmannHandlerFactory extends BaseThingHandlerFactory {
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (THING_TYPE_BRIDGE.equals(thingTypeUID)) {
+        if (THING_TYPE_ACCOUNT.equals(thingTypeUID)) {
+            Storage<String> storage = storageService.getStorage(thing.getUID().toString(),
+                    String.class.getClassLoader());
+            bindingServlet.addAccountThing(thing);
+            return new ViessmannAccountHandler((Bridge) thing, storage, httpClient, createCallbackUrl());
+        } else if (THING_TYPE_GATEWAY.equals(thingTypeUID)) {
+            Storage<String> storage = storageService.getStorage(thing.getUID().toString(),
+                    String.class.getClassLoader());
+            bindingServlet.addAccountThing(thing);
+            return new ViessmannGatewayHandler((Bridge) thing, storage, httpClient, createCallbackUrl());
+        } else if (THING_TYPE_BRIDGE.equals(thingTypeUID)) {
             Storage<String> storage = storageService.getStorage(thing.getUID().toString(),
                     String.class.getClassLoader());
             bindingServlet.addAccountThing(thing);

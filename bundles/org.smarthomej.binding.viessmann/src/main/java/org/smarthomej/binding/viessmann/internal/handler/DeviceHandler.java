@@ -15,12 +15,7 @@ package org.smarthomej.binding.viessmann.internal.handler;
 import static org.smarthomej.binding.viessmann.internal.ViessmannBindingConstants.*;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +32,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.binding.BridgeHandler;
 import org.openhab.core.thing.binding.ThingHandlerCallback;
 import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.Command;
@@ -54,6 +50,7 @@ import org.smarthomej.binding.viessmann.internal.dto.features.FeatureDataDTO;
 import org.smarthomej.binding.viessmann.internal.dto.features.FeatureProperties;
 import org.smarthomej.binding.viessmann.internal.dto.schedule.DaySchedule;
 import org.smarthomej.binding.viessmann.internal.dto.schedule.ScheduleDTO;
+import org.smarthomej.binding.viessmann.internal.interfaces.BridgeInterface;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -96,14 +93,29 @@ public class DeviceHandler extends ViessmannThingHandler {
     @Override
     public void initChannelState() {
         Bridge bridge = getBridge();
-        ViessmannBridgeHandler bridgeHandler = bridge == null ? null : (ViessmannBridgeHandler) bridge.getHandler();
-        if (bridgeHandler != null) {
-            bridgeHandler.updateFeaturesOfDevice(this);
+        if (bridge != null) {
+            BridgeHandler bridgeHandler = bridge.getHandler();
+            if (bridgeHandler != null) {
+                if (bridgeHandler instanceof BridgeInterface bridgeInterface) {
+                    bridgeInterface.updateFeaturesOfDevice(this);
+                } else {
+                    logger.error("BridgeHandler does not support bridgeInterface");
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid bridge type");
+                }
+            }
         }
     }
 
     public String getDeviceId() {
         return config.deviceId;
+    }
+
+    public @NonNullByDefault String getInstallationId() {
+        return Objects.requireNonNull(thing.getProperties().get(INSTALLATION_ID), "Installation ID is missing!");
+    }
+
+    public @NonNullByDefault String getGatewaySerial() {
+        return Objects.requireNonNull(thing.getProperties().get(GATEWAY_SERIAL), "Gateway serial is missing!");
     }
 
     @Override
@@ -194,16 +206,24 @@ public class DeviceHandler extends ViessmannThingHandler {
                     }
                     if (uri != null && param != null) {
                         Bridge bridge = getBridge();
-                        ViessmannBridgeHandler bridgeHandler = bridge == null ? null
-                                : (ViessmannBridgeHandler) bridge.getHandler();
-                        if (bridgeHandler != null) {
-                            try {
-                                if (!bridgeHandler.setData(uri, param) || initState) {
-                                    scheduler.schedule(this::initChannelState, initStateDelay, TimeUnit.SECONDS);
+                        if (bridge != null) {
+                            BridgeHandler bridgeHandler = bridge.getHandler();
+                            if (bridgeHandler != null) {
+                                if (bridgeHandler instanceof BridgeInterface bridgeInterface) {
+                                    try {
+                                        if (!bridgeInterface.setData(uri, param) || initState) {
+                                            scheduler.schedule(this::initChannelState, initStateDelay,
+                                                    TimeUnit.SECONDS);
+                                        }
+                                    } catch (ViessmannCommunicationException e) {
+                                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                                                e.getMessage());
+                                    }
+                                } else {
+                                    logger.error("BridgeHandler does not support bridgeInterface");
+                                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                                            "Invalid bridge type");
                                 }
-                            } catch (ViessmannCommunicationException e) {
-                                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                                        e.getMessage());
                             }
                         }
                     }
