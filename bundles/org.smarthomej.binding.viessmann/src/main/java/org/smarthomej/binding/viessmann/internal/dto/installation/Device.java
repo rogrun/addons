@@ -32,4 +32,7 @@ public class Device {
     public String status;
     public String deviceType;
     public List<String> roles = null;
+    public boolean isBoilerSerialEditable;
+    public String brand;
+    public String translationKey;
 }

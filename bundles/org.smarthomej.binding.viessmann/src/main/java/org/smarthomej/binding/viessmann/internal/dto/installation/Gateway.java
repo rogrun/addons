@@ -34,4 +34,5 @@ public class Gateway {
     public Integer installationId;
     public String registeredAt;
     public Object description;
+    public Boolean otaOngoing;
 }

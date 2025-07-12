@@ -33,6 +33,8 @@ public class ViessmannBindingConstants {
     public static final String BINDING_NAME = "Viessmann API";
 
     // List of all Thing Type UIDs
+    public static final ThingTypeUID THING_TYPE_ACCOUNT = new ThingTypeUID(BINDING_ID, "account");
+    public static final ThingTypeUID THING_TYPE_GATEWAY = new ThingTypeUID(BINDING_ID, "gateway");
     public static final ThingTypeUID THING_TYPE_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
     public static final ThingTypeUID THING_TYPE_DEVICE = new ThingTypeUID(BINDING_ID, "device");
 
@@ -52,6 +54,8 @@ public class ViessmannBindingConstants {
 
     public static final int API_TIMEOUT_MS = 20000;
     public static final String PROPERTY_ID = "deviceId";
+    public static final String INSTALLATION_ID = "installationId";
+    public static final String GATEWAY_SERIAL = "gatewaySerial";
 
     public static final Map<String, String> FEATURES_MAP = ResourceUtil.readProperties(ViessmannBindingConstants.class,
             "features.properties");

@@ -33,4 +33,10 @@ public class Data {
     public Boolean endUserWlanCommissioned;
     public Boolean withoutViCareUser;
     public String installationType;
+    public String buildingName;
+    public String buildingEmail;
+    public String buildingPhone;
+    public String accessLevel;
+    public String ownershipType;
+    public String brand;
 }
