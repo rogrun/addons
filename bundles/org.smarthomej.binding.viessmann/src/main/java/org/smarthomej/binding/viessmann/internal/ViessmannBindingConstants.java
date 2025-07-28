@@ -41,9 +41,9 @@ public class ViessmannBindingConstants {
     public static final String COUNT_API_CALLS = "countApiCalls";
 
     // References for needed API identifiers
-    public static final String VIESSMANN_HOST = "api.viessmann.com";
-    public static final String VIESSMANN_BASE_URL = "https://api.viessmann.com/";
-    public static final String IAM_BASE_URL = "https://iam.viessmann.com/";
+    public static final String VIESSMANN_HOST = "api.viessmann-climatesolutions.com";
+    public static final String VIESSMANN_BASE_URL = "https://api.viessmann-climatesolutions.com/";
+    public static final String IAM_BASE_URL = "https://iam.viessmann-climatesolutions.com/";
     public static final String VIESSMANN_AUTHORIZE_URL = IAM_BASE_URL + "idp/v3/authorize";
     public static final String VIESSMANN_TOKEN_URL = IAM_BASE_URL + "idp/v3/token";
     public static final String VIESSMANN_SCOPE = "IoT%20User%20offline_access";

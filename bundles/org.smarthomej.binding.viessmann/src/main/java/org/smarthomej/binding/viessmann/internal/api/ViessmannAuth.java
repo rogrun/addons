@@ -301,7 +301,7 @@ public class ViessmannAuth {
     private @Nullable String executeUrlToken(String url) {
         Request request = httpClient.newRequest(url).timeout(API_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 .method(HttpMethod.POST).header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Host", "iam.viessmann.com");
+                .header("Host", "iam.viessmann-climatesolutions.com");
         try {
             ContentResponse contentResponse = request.send();
             switch (contentResponse.getStatus()) {

@@ -256,6 +256,9 @@ public class ViessmannApi {
     }
 
     public boolean setData(String url, String json) throws ViessmannCommunicationException {
+        if (url.contains("viessmann.com")) {
+            url = url.replace("viessmann.com", "viessmann-climatesolutions.com");
+        }
         return executePost(url, json);
     }
 
