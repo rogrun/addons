@@ -457,10 +457,25 @@ public class DeviceHandler extends ViessmannThingHandler {
                                 }
                             }
 
-                            if (thing.getChannel(msg.getChannelId()) == null) {
+                            Channel channel = thing.getChannel(msg.getChannelId());
+                            if (channel == null) {
+                                logger.trace("Channel does not exist -> Channel is being created");
                                 createChannel(msg);
+                            } else {
+                                Map<String, String> properties = channel.getProperties();
+                                for (String propKey : PROPERTIES_URIS) {
+                                    if (properties.containsKey(propKey)) {
+                                        logger.trace("URI from Channel: {}={}", propKey, properties.get(propKey));
+                                        Map<String, String> uris = msg.getCommands().getUris();
+                                        logger.trace("URI from JSON response: {}={}", propKey, uris.get(propKey));
+                                        if (!Objects.equals(properties.get(propKey), uris.get(propKey))) {
+                                            logger.trace(
+                                                    "The command URI is different. The channel is now being updated.");
+                                            createChannel(msg);
+                                        }
+                                    }
+                                }
                             }
-
                             setStateDescriptionOptions(msg);
 
                             ThingMessageDTO subMsg = new ThingMessageDTO();

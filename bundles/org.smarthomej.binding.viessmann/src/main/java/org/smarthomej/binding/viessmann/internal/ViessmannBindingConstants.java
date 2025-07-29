@@ -12,6 +12,7 @@
  */
 package org.smarthomej.binding.viessmann.internal;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,7 +31,6 @@ import org.smarthomej.commons.util.ResourceUtil;
 @NonNullByDefault
 public class ViessmannBindingConstants {
     public static final String BINDING_ID = "viessmann";
-    public static final String BINDING_NAME = "Viessmann API";
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_ACCOUNT = new ThingTypeUID(BINDING_ID, "account");
@@ -43,9 +43,10 @@ public class ViessmannBindingConstants {
     public static final String COUNT_API_CALLS = "countApiCalls";
 
     // References for needed API identifiers
-    public static final String VIESSMANN_HOST = "api.viessmann.com";
-    public static final String VIESSMANN_BASE_URL = "https://api.viessmann.com/";
-    public static final String IAM_BASE_URL = "https://iam.viessmann.com/";
+    public static final String VIESSMANN_HOST = "api.viessmann-climatesolutions.com";
+    public static final String IAM_HOST = "iam.viessmann-climatesolutions.com";
+    public static final String VIESSMANN_BASE_URL = "https://" + VIESSMANN_HOST + "/";
+    public static final String IAM_BASE_URL = "https://" + IAM_HOST + "/";
     public static final String VIESSMANN_AUTHORIZE_URL = IAM_BASE_URL + "idp/v3/authorize";
     public static final String VIESSMANN_TOKEN_URL = IAM_BASE_URL + "idp/v3/token";
     public static final String VIESSMANN_SCOPE = "IoT%20User%20offline_access";
@@ -84,4 +85,20 @@ public class ViessmannBindingConstants {
 
     public static final String CHANNEL_RUN_QUERY_ONCE = "runQueryOnce";
     public static final String CHANNEL_RUN_ERROR_QUERY_ONCE = "runErrorQueryOnce";
+
+    public static final List<String> PROPERTIES_URIS = List.of( //
+            "setNameUri", //
+            "setCurveUri", //
+            "setScheduleUri", //
+            "setModeUri", //
+            "setTemperatureUri", //
+            "temperatureUri", //
+            "activateUri", //
+            "deactivateUri", //
+            "changeEndDateUri", //
+            "scheduleUri", //
+            "unscheduleUri", //
+            "setMinUri", //
+            "setMaxUri", //
+            "setHysteresisUri");
 }

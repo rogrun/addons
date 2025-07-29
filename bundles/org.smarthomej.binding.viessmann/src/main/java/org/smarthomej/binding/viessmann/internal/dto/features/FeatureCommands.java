@@ -13,6 +13,8 @@
 package org.smarthomej.binding.viessmann.internal.dto.features;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The {@link FeatureCommands} provides command of features
@@ -75,5 +77,47 @@ public class FeatureCommands {
             list.add("setHysteresis");
         }
         return list;
+    }
+
+    public Map<String, String> getUris() {
+        Map<String, String> uris = new HashMap<>();
+        if (setName != null) {
+            uris.put("setNameUri", setName.uri);
+        }
+        if (setCurve != null) {
+            uris.put("setCurveUri", setCurve.uri);
+        }
+        if (setSchedule != null) {
+            uris.put("setScheduleUri", setSchedule.uri);
+        }
+        if (setMode != null) {
+            uris.put("setModeUri", setMode.uri);
+        }
+        if (setTemperature != null) {
+            uris.put("setTemperatureUri", setTemperature.uri);
+        }
+        if (activate != null) {
+            uris.put("activateUri", activate.uri);
+        }
+        if (deactivate != null) {
+            uris.put("deactivateUri", deactivate.uri);
+        }
+        if (changeEndDate != null) {
+            uris.put("changeEndDateUri", changeEndDate.uri);
+        }
+        if (schedule != null) {
+            uris.put("scheduleUri", schedule.uri);
+        }
+        if (unschedule != null) {
+            uris.put("unscheduleUri", unschedule.uri);
+        }
+        if (setTargetTemperature != null) {
+            uris.put("setTargetTemperatureUri", setTargetTemperature.uri);
+        }
+        if (setHysteresis != null) {
+            uris.put("setHysteresisUri", setHysteresis.uri);
+        }
+
+        return uris;
     }
 }
