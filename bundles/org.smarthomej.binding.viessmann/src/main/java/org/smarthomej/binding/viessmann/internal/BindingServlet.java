@@ -57,18 +57,6 @@ public class BindingServlet extends HttpServlet {
         }
     }
 
-    public void addAccountThing(Thing accountThing) {
-        synchronized (accountHandlers) {
-            accountHandlers.add(accountThing);
-        }
-    }
-
-    public void removeAccountThing(Thing accountThing) {
-        synchronized (accountHandlers) {
-            accountHandlers.remove(accountThing);
-        }
-    }
-
     public void dispose() {
         httpService.unregister(servletUrl);
     }
@@ -94,7 +82,7 @@ public class BindingServlet extends HttpServlet {
 
         StringBuilder html = new StringBuilder();
         int codeEnd;
-        if (queryString != null && queryString.length() > 0) {
+        if (queryString != null && !queryString.isEmpty()) {
             if (queryString.contains("code=")) {
                 if (!queryString.contains("&")) {
                     codeEnd = queryString.length();

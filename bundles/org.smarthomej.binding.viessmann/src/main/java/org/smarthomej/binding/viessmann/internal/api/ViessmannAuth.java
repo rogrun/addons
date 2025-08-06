@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smarthomej.binding.viessmann.internal.dto.oauth.AuthorizeResponseDTO;
 import org.smarthomej.binding.viessmann.internal.dto.oauth.TokenResponseDTO;
-import org.smarthomej.binding.viessmann.internal.handler.ViessmannAccountHandler;
+import org.smarthomej.binding.viessmann.internal.interfaces.ApiInterface;
 
 import com.google.gson.JsonSyntaxException;
 
@@ -48,7 +48,7 @@ public class ViessmannAuth {
 
     private final Logger logger = LoggerFactory.getLogger(ViessmannAuth.class);
 
-    private final ViessmannAccountHandler bridgeHandler;
+    private final ApiInterface bridgeHandler;
     private final ViessmannApi api;
     private final String apiKey;
     private final String user;
@@ -70,7 +70,7 @@ public class ViessmannAuth {
 
     private @Nullable String refreshToken;
 
-    public ViessmannAuth(ViessmannApi api, ViessmannAccountHandler bridgeHandler, String apiKey, HttpClient httpClient,
+    public ViessmannAuth(ViessmannApi api, ApiInterface bridgeHandler, String apiKey, HttpClient httpClient,
             String user, String password, @Nullable String callbackUrl) {
         this.api = api;
         this.apiKey = apiKey;
@@ -207,7 +207,7 @@ public class ViessmannAuth {
             TokenResponseDTO tokenResponse = api.getGson().fromJson(response, TokenResponseDTO.class);
             if (tokenResponse == null) {
                 logger.debug("ViessmannAuth: Got null token response from Viessmann API");
-                bridgeHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                bridgeHandler.updateBridgeStatusExtended(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                         "ViessmannAuth: Got null token response from Viessmann API");
                 setState(ViessmannAuthState.NEED_AUTH);
                 return;
@@ -241,7 +241,7 @@ public class ViessmannAuth {
         TokenResponseDTO tokenResponse = api.getGson().fromJson(response, TokenResponseDTO.class);
         if (tokenResponse == null) {
             logger.debug("ViessmannAuth: Got null token response from Viessmann API");
-            bridgeHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+            bridgeHandler.updateBridgeStatusExtended(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                     "ViessmannAuth: Got null token response from Viessmann API");
             setState(ViessmannAuthState.NEED_AUTH);
             return;
@@ -255,12 +255,12 @@ public class ViessmannAuth {
     }
 
     private void updateBridgeStatusLogin() {
-        bridgeHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+        bridgeHandler.updateBridgeStatusExtended(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
                 "Login fails. Please check user and password.");
     }
 
     private void updateBridgeStatusApiKey() {
-        bridgeHandler.updateBridgeStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+        bridgeHandler.updateBridgeStatusExtended(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
                 "Login fails. Please check API Key.");
     }
 

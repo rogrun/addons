@@ -98,9 +98,9 @@ public class ViessmannAccountDiscoveryService extends AbstractThingHandlerDiscov
             ThingUID uid = new ThingUID(THING_TYPE_GATEWAY, bridgeUID, serial);
             Map<String, Object> properties = Map.ofEntries(entry(GATEWAY_SERIAL, serial),
                     entry(INSTALLATION_ID, installationId));
-            String label = "Viessmann Gateway " + gatewayType + " " + serial;
+            String label = "Viessmann Gateway " + gatewayType;
             DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withProperties(properties)
-                    .withRepresentationProperty(INSTALLATION_ID).withLabel(label).build();
+                    .withRepresentationProperty(GATEWAY_SERIAL).withLabel(label).build();
             thingDiscovered(result);
             logger.debug("Discovered Gateway {}", uid);
         }

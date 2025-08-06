@@ -7,6 +7,14 @@
 	<bridge-type id="account">
 		<label>Viessmann Account</label>
 		<description>Account Bridge with Client ID</description>
+		<channels>
+			<channel id="countApiCalls" typeId="type-number">
+				<label>Count API Calls</label>
+			</channel>
+		</channels>
+		<properties>
+			<property name="thingTypeVersion">3</property>
+		</properties>
 		<config-description>
 			<parameter name="apiKey" type="text" required="true">
 				<label>Client ID</label>
@@ -22,11 +30,6 @@
 				<label>Password</label>
 				<description>The password for the given E-Mail address</description>
 				<context>password</context>
-			</parameter>
-			<parameter name="installationId" type="text" required="false">
-				<label>Installations ID</label>
-				<description>The Installations ID</description>
-				<advanced>true</advanced>
 			</parameter>
 			<parameter name="disablePolling" type="boolean" required="false">
 				<label>Disable polling</label>
@@ -72,9 +75,6 @@
 		<label>Viessmann Gateway</label>
 		<description>The gateway to communicate with the Viessmann Account</description>
 		<channels>
-			<channel id="countApiCalls" typeId="type-number">
-				<label>Count API Calls</label>
-			</channel>
 			<channel id="errorIsActive" typeId="errorIsActive">
 				<label>Error is active</label>
 			</channel>
@@ -104,27 +104,6 @@
 				<label>Disable polling</label>
 				<description>Deactivates the polling to carry out the manual poll using an item</description>
 				<default>false</default>
-				<advanced>true</advanced>
-			</parameter>
-			<parameter name="apiCallLimit" type="integer" required="false">
-				<label>API call limit</label>
-				<description>The limit how often call the API. For calculating the time how often the data is queried in
-					seconds</description>
-				<default>1450</default>
-				<advanced>true</advanced>
-			</parameter>
-			<parameter name="bufferApiCommands" type="integer" required="false">
-				<label>Buffer for API commands</label>
-				<description>The buffer for commands. For calculating the time how often the data is queried in seconds</description>
-				<default>450</default>
-				<advanced>true</advanced>
-			</parameter>
-			<parameter name="pollingInterval" type="integer" required="false" unit="s">
-				<label>Polling Interval</label>
-				<default>0</default>
-				<description>How often the heating should be queried in seconds (If it's set to 0, then the interval will
-					be
-					calculated by the binding)</description>
 				<advanced>true</advanced>
 			</parameter>
 			<parameter name="pollingIntervalErrors" type="integer" required="false" unit="min">
@@ -225,6 +204,7 @@
 	<thing-type id="device">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge"/>
+			<bridge-type-ref id="gateway"/>
 		</supported-bridge-type-refs>
 		<label>Viessmann Device</label>
 		<properties>
@@ -319,7 +299,7 @@
 		<item-type>Number:Time</item-type>
 		<label>Number</label>
 		<category>Number</category>
-		<state pattern="%.1f %unit%" readOnly="true"/>
+		<state pattern="%d %unit%" readOnly="true"/>
 	</channel-type>
 
 	<channel-type id="type-percent">

@@ -15,7 +15,13 @@ package org.smarthomej.binding.viessmann.internal.handler;
 import static org.smarthomej.binding.viessmann.internal.ViessmannBindingConstants.*;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,6 +103,7 @@ public class DeviceHandler extends ViessmannThingHandler {
             BridgeHandler bridgeHandler = bridge.getHandler();
             if (bridgeHandler != null) {
                 if (bridgeHandler instanceof BridgeInterface bridgeInterface) {
+                    bridgeInterface.setConfigInstallationGatewayIdToDevice(this);
                     bridgeInterface.updateFeaturesOfDevice(this);
                 } else {
                     logger.error("BridgeHandler does not support bridgeInterface");
@@ -108,6 +115,11 @@ public class DeviceHandler extends ViessmannThingHandler {
 
     public String getDeviceId() {
         return config.deviceId;
+    }
+
+    public void setConfigInstallationGatewayId(String installationId, String gatewaySerial) {
+        this.updateProperty(INSTALLATION_ID, installationId);
+        this.updateProperty(GATEWAY_SERIAL, gatewaySerial);
     }
 
     public @NonNullByDefault String getInstallationId() {

@@ -98,17 +98,12 @@ public class ViessmannHandlerFactory extends BaseThingHandlerFactory {
         if (THING_TYPE_ACCOUNT.equals(thingTypeUID)) {
             Storage<String> storage = storageService.getStorage(thing.getUID().toString(),
                     String.class.getClassLoader());
-            bindingServlet.addAccountThing(thing);
             return new ViessmannAccountHandler((Bridge) thing, storage, httpClient, createCallbackUrl());
         } else if (THING_TYPE_GATEWAY.equals(thingTypeUID)) {
-            Storage<String> storage = storageService.getStorage(thing.getUID().toString(),
-                    String.class.getClassLoader());
-            bindingServlet.addAccountThing(thing);
-            return new ViessmannGatewayHandler((Bridge) thing, storage, httpClient, createCallbackUrl());
+            return new ViessmannGatewayHandler((Bridge) thing);
         } else if (THING_TYPE_BRIDGE.equals(thingTypeUID)) {
             Storage<String> storage = storageService.getStorage(thing.getUID().toString(),
                     String.class.getClassLoader());
-            bindingServlet.addAccountThing(thing);
             return new ViessmannBridgeHandler((Bridge) thing, storage, httpClient, createCallbackUrl());
         } else if (THING_TYPE_DEVICE.equals(thingTypeUID)) {
             return new DeviceHandler(thing, stateDescriptionProvider);
@@ -118,8 +113,6 @@ public class ViessmannHandlerFactory extends BaseThingHandlerFactory {
 
     @Override
     protected synchronized void removeHandler(ThingHandler thingHandler) {
-        BindingServlet bindingServlet = this.bindingServlet;
-        bindingServlet.removeAccountThing(thingHandler.getThing());
     }
 
     private @Nullable String createCallbackUrl() {

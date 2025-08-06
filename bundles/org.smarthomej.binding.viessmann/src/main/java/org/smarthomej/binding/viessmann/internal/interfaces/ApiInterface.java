@@ -14,21 +14,26 @@ package org.smarthomej.binding.viessmann.internal.interfaces;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.smarthomej.binding.viessmann.internal.api.ViessmannCommunicationException;
-import org.smarthomej.binding.viessmann.internal.handler.DeviceHandler;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
 
 /**
- * The {@link BridgeInterface} is responsible for handling Bridges
+ * The {@link ApiInterface} is responsible for handling ViessmannApi
  *
  *
  * @author Ronny Grun - Initial contribution
  */
 @NonNullByDefault
-public interface BridgeInterface {
+public interface ApiInterface {
 
-    void setConfigInstallationGatewayIdToDevice(@Nullable DeviceHandler handler);
+    void setInstallationGatewayId(@Nullable String newInstallation, @Nullable String newGateway);
 
-    boolean setData(@Nullable String url, @Nullable String json) throws ViessmannCommunicationException;
+    void updateBridgeStatus(@Nullable ThingStatus status);
 
-    void updateFeaturesOfDevice(@Nullable DeviceHandler handler);
+    void updateBridgeStatusExtended(@Nullable ThingStatus status, @Nullable ThingStatusDetail statusDetail,
+            @Nullable String statusMessage);
+
+    String getThingUIDasString();
+
+    void waitForApiCallLimitReset(@Nullable Long limitReset);
 }

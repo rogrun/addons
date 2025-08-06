@@ -24,9 +24,6 @@ public class GatewayConfiguration {
 
     public String installationId = "";
     public String gatewaySerial = "";
-    public int apiCallLimit = 1450;
-    public int bufferApiCommands = 450;
-    public int pollingInterval = 0;
     public int pollingIntervalErrors = 60;
     public boolean disablePolling = false;
 }

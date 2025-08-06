@@ -90,23 +90,14 @@ public class ViessmannGatewayDiscoveryService extends AbstractThingHandlerDiscov
         }
     }
 
-    private void buildDiscoveryResult(String address) {
-        ThingUID uid = new ThingUID(THING_TYPE_DEVICE, bridgeUID, address);
-        Map<String, Object> properties = Map.ofEntries(entry(PROPERTY_ID, address));
-        String label = "Viessmann Device " + address;
-        DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withProperties(properties)
-                .withRepresentationProperty(PROPERTY_ID).withLabel(label).build();
-        thingDiscovered(result);
-        logger.debug("Discovered Device {}", uid);
-    }
-
     private void buildDiscoveryResult(DeviceData device) {
         ThingUID uid = new ThingUID(THING_TYPE_DEVICE, bridgeUID, device.id);
         Map<String, Object> properties = Map.ofEntries(entry(PROPERTY_ID, device.id),
+                entry(REPRESENTATION_ID, device.gatewaySerial + ":" + device.id),
                 entry(GATEWAY_SERIAL, device.gatewaySerial), entry(INSTALLATION_ID, device.installationId));
         String label = "Viessmann Device " + device.id;
         DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withProperties(properties)
-                .withRepresentationProperty(PROPERTY_ID).withLabel(label).build();
+                .withRepresentationProperty(REPRESENTATION_ID).withLabel(label).build();
         thingDiscovered(result);
         logger.debug("Discovered Device {}", uid);
     }

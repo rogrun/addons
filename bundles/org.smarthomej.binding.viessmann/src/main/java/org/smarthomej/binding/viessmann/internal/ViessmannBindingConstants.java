@@ -57,6 +57,7 @@ public class ViessmannBindingConstants {
     public static final String PROPERTY_ID = "deviceId";
     public static final String INSTALLATION_ID = "installationId";
     public static final String GATEWAY_SERIAL = "gatewaySerial";
+    public static final String REPRESENTATION_ID = "representationId";
 
     public static final Map<String, String> FEATURES_MAP = ResourceUtil.readProperties(ViessmannBindingConstants.class,
             "features.properties");
